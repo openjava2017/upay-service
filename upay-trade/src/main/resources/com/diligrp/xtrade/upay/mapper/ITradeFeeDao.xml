@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.diligrp.xtrade.upay.trade.dao.ITradeFeeDao">
+    <resultMap id="TradeFeeMap" type="com.diligrp.xtrade.upay.trade.model.TradeFee">
+        <id column="id" property="id"/>
+        <result column="trade_id" property="tradeId"/>
+        <result column="amount" property="amount"/>
+        <result column="type" property="type"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <resultMap id="PaymentFeeMap" type="com.diligrp.xtrade.upay.trade.model.PaymentFee">
+        <id column="id" property="id"/>
+        <result column="payment_id" property="paymentId"/>
+        <result column="amount" property="amount"/>
+        <result column="type" property="type"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <insert id="insertTradeFees" parameterType="java.util.List">
+        INSERT INTO upay_trade_fee(trade_id, amount, type, created_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.tradeId}, #{item.amount}, #{item.type}, #{item.createdTime})
+        </foreach>
+    </insert>
+
+    <select id="findTradeFees" parameterType="long" resultMap="TradeFeeMap">
+        SELECT * FROM upay_trade_fee WHERE trade_id = #{tradeId} ORDER BY ID
+    </select>
+
+    <insert id="insertPaymentFees" parameterType="java.util.List">
+        INSERT INTO upay_payment_fee(payment_id, amount, type, created_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.paymentId}, #{item.amount}, #{item.type}, #{item.createdTime})
+        </foreach>
+    </insert>
+
+    <select id="findPaymentFees" parameterType="long" resultMap="PaymentFeeMap">
+        SELECT * FROM upay_payment_fee WHERE payment_id = #{paymentId} ORDER BY ID
+    </select>
+</mapper>

@@ -1,0 +1,7 @@
+group = 'com.diligrp'
+archivesBaseName = 'upay-boss'
+
+dependencies {
+    api project(':upay-trade')
+    runtimeOnly 'mysql:mysql-connector-java'
+}

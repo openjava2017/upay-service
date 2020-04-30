@@ -1,0 +1,5 @@
+group = 'com.diligrp'
+archivesBaseName = 'upay-core'
+
+dependencies {
+}

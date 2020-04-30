@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.diligrp.xtrade.upay.trade.dao.IMerchantDao">
+    <resultMap id="ApplicationMap" type="com.diligrp.xtrade.upay.trade.domain.Application">
+        <result column="app_id" property="appId"/>
+        <result column="mch_id" property="mchId"/>
+        <result column="name" property="name"/>
+        <result column="access_token" property="accessToken"/>
+        <result column="secret_key" property="secretKey"/>
+    </resultMap>
+
+    <resultMap id="MerchantMap" type="com.diligrp.xtrade.upay.trade.domain.Merchant">
+        <result column="mch_id" property="mchId"/>
+        <result column="code" property="code"/>
+        <result column="name" property="name"/>
+        <result column="profit_account" property="profitAccount"/>
+        <result column="vouch_account" property="vouchAccount"/>
+        <result column="return_account" property="returnAccount"/>
+        <result column="state" property="state"/>
+    </resultMap>
+
+    <select id="findApplicationById" parameterType="long" resultMap="ApplicationMap">
+        SELECT * FROM upay_application WHERE app_id = #{appId}
+    </select>
+
+    <select id="findMerchantById" parameterType="long" resultMap="MerchantMap">
+        SELECT * FROM upay_merchant WHERE mch_id = #{mchId}
+    </select>
+</mapper>

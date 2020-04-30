@@ -1,0 +1,39 @@
+plugins {
+    id 'org.springframework.boot' version '2.2.5.RELEASE' apply false
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    id 'java'
+}
+
+ext {
+    buildVersion = '0.0.1'
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'java-library'
+    apply plugin: 'idea'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+
+    version = buildVersion
+    sourceCompatibility = '11'
+    targetCompatibility = '11'
+
+    compileJava {
+        options.encoding = 'UTF-8'
+    }
+
+    repositories {
+        mavenLocal()
+        jcenter()
+        maven {
+            url 'http://maven.aliyun.com/nexus/content/groups/public/'
+        }
+    }
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.1.2'
+        implementation fileTree(dir: 'E:\\upay-service\\libs', includes: ['*jar'])
+    }
+}

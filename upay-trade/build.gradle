@@ -1,0 +1,6 @@
+group = 'com.diligrp'
+archivesBaseName = 'upay-trade'
+
+dependencies {
+    api project(':upay-channel')
+}
