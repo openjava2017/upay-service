@@ -2,6 +2,8 @@ package com.diligrp.xtrade.upay.trade.model;
 
 import com.diligrp.xtrade.shared.domain.BaseDo;
 
+import java.time.LocalDateTime;
+
 public class TradePayment extends BaseDo {
     // 支付ID
     private String paymentId;
@@ -171,6 +173,11 @@ public class TradePayment extends BaseDo {
 
         public Builder version(Integer version) {
             TradePayment.this.version = version;
+            return this;
+        }
+
+        public Builder createdTime(LocalDateTime createdTime) {
+            TradePayment.this.createdTime = createdTime;
             return this;
         }
 

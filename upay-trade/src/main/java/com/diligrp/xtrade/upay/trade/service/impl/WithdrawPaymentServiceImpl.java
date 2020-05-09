@@ -1,6 +1,6 @@
 package com.diligrp.xtrade.upay.trade.service.impl;
 
-import com.diligrp.xtrade.upay.channel.domain.*;
+import com.diligrp.xtrade.upay.channel.domain.AccountChannel;
 import com.diligrp.xtrade.upay.channel.service.IAccountChannelService;
 import com.diligrp.xtrade.upay.channel.type.ChannelType;
 import com.diligrp.xtrade.upay.core.ErrorCode;
@@ -30,8 +30,8 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
-@Service("depositPaymentService")
-public class DepositPaymentServiceImpl implements IPaymentService {
+@Service("withdrawPaymentService")
+public class WithdrawPaymentServiceImpl implements IPaymentService {
 
     @Resource
     private IAccountChannelService accountChannelService;
@@ -48,11 +48,11 @@ public class DepositPaymentServiceImpl implements IPaymentService {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public PaymentResult commit(TradeOrder trade, Payment payment) {
-        if (payment.getChannelId() != ChannelType.CASH.getCode() && payment.getChannelId() != ChannelType.POS.getCode()) {
-            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "不支持该渠道进行账户充值");
+        if (payment.getChannelId() != ChannelType.POS.getCode()) {
+            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "不支持该渠道进行账户提现");
         }
         if (!trade.getAccountId().equals(payment.getAccountId())) {
-            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "充值账号不一致");
+            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "提现账号不一致");
         }
 
         List<TradeFee> tradeFees = Collections.emptyList();
@@ -60,11 +60,11 @@ public class DepositPaymentServiceImpl implements IPaymentService {
             tradeFees = tradeFeeDao.findTradeFees(trade.getTradeId());
         }
 
-        // 处理个人充值
-        String paymentId = trade.getTradeId();
+        // 处理个人提现
         LocalDateTime now = LocalDateTime.now();
+        String paymentId = trade.getTradeId();
         AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId(), trade.getType(), now);
-        channel.income(trade.getAmount(), FundType.FUND.getCode(), typeName(payment.getChannelId()));
+        channel.outgo(trade.getAmount(), FundType.FUND.getCode(), TradeType.getName(trade.getType()));
         tradeFees.forEach(fee -> {
             channel.outgo(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()));
         });
@@ -87,25 +87,16 @@ public class DepositPaymentServiceImpl implements IPaymentService {
             throw new TradePaymentException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统正忙，请稍后重试");
         }
         TradePayment paymentDo = TradePayment.builder().paymentId(paymentId).tradeId(trade.getTradeId())
-                .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
-                .amount(payment.getAmount()).fee(0L).state(PaymentState.SUCCESS.getCode()).description(null)
-                .version(0).createdTime(now).build();
+            .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
+            .amount(payment.getAmount()).fee(0L).state(PaymentState.SUCCESS.getCode()).description(null)
+            .version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
 
         return PaymentResult.of(paymentId, TradeState.SUCCESS.getCode(), fund);
     }
 
-    private String typeName(int channelType) {
-        if (channelType == ChannelType.CASH.getCode()) {
-            return "现金充值";
-        } else if (channelType == ChannelType.POS.getCode()) {
-            return "POS充值";
-        }
-        return null;
-    }
-
     @Override
     public TradeType supportType() {
-        return TradeType.DEPOSIT;
+        return TradeType.WITHDRAW;
     }
 }
