@@ -11,9 +11,9 @@ import java.util.List;
 public interface ITradeFeeDao extends MybatisMapperSupport {
     void insertTradeFees(List<TradeFee> fees);
 
-    List<TradeFee> findTradeFees(Long tradeId);
+    List<TradeFee> findTradeFees(String tradeId);
 
     void insertPaymentFees(List<PaymentFee> fees);
 
-    List<PaymentFee> findPaymentFees(Long paymentId);
+    List<PaymentFee> findPaymentFees(String paymentId);
 }

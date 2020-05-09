@@ -1,9 +1,9 @@
 package com.diligrp.xtrade.upay.trade.domain;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
-public class Trade {
+public class TradeRequest {
     // 交易类型
     private Integer type;
     // 账号ID
@@ -68,10 +68,14 @@ public class Trade {
     }
 
     public List<Fee> getFees() {
-        return fees == null ? Collections.EMPTY_LIST : fees;
+        return fees;
     }
 
     public void setFees(List<Fee> fees) {
         this.fees = fees;
+    }
+
+    public Optional<List<Fee>> fees() {
+        return Optional.ofNullable(fees);
     }
 }

@@ -17,7 +17,7 @@ public enum TradeType implements IEnumType {
 
     WITHDRAW("提现", 11),
 
-    DIRECT_TRADE("及时交易", 20),
+    DIRECT_TRADE("即时交易", 20),
 
     VOUCH_TRADE("担保交易", 21),
 

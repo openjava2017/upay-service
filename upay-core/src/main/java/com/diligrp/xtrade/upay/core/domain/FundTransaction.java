@@ -54,7 +54,7 @@ public class FundTransaction {
         this.when = when;
     }
 
-    public static FundTransaction of(String paymentId, Long accountId, Integer type,
+    public static FundTransaction of(String paymentId, long accountId, int type,
                                      FundActivity[] activities, LocalDateTime when) {
         FundTransaction transaction = new FundTransaction();
         transaction.setPaymentId(paymentId);

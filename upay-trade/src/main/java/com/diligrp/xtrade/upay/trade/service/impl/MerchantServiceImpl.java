@@ -1,6 +1,7 @@
 package com.diligrp.xtrade.upay.trade.service.impl;
 
 import com.diligrp.xtrade.upay.trade.dao.IMerchantDao;
+import com.diligrp.xtrade.upay.trade.dao.ITradeFeeDao;
 import com.diligrp.xtrade.upay.trade.domain.Application;
 import com.diligrp.xtrade.upay.trade.domain.Merchant;
 import com.diligrp.xtrade.upay.trade.service.IMerchantService;
@@ -14,6 +15,9 @@ public class MerchantServiceImpl implements IMerchantService {
 
     @Resource
     private IMerchantDao merchantDao;
+
+    @Resource
+    private ITradeFeeDao tradeFeeDao;
 
     @Override
     public Optional<Application> findApplicationById(Long appId) {

@@ -1,10 +1,12 @@
 package com.diligrp.xtrade.upay.core.exception;
 
+import com.diligrp.xtrade.upay.core.ErrorCode;
+
 public class PaymentServiceException extends RuntimeException {
     /**
      * 错误码
      */
-    private int code = 1000;
+    private int code = ErrorCode.SYSTEM_UNKNOWN_ERROR;
 
     /**
      * 是否打印异常栈

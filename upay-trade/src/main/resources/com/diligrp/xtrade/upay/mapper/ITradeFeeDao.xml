@@ -27,7 +27,7 @@
         </foreach>
     </insert>
 
-    <select id="findTradeFees" parameterType="long" resultMap="TradeFeeMap">
+    <select id="findTradeFees" parameterType="string" resultMap="TradeFeeMap">
         SELECT * FROM upay_trade_fee WHERE trade_id = #{tradeId} ORDER BY ID
     </select>
 
@@ -39,7 +39,7 @@
         </foreach>
     </insert>
 
-    <select id="findPaymentFees" parameterType="long" resultMap="PaymentFeeMap">
+    <select id="findPaymentFees" parameterType="string" resultMap="PaymentFeeMap">
         SELECT * FROM upay_payment_fee WHERE payment_id = #{paymentId} ORDER BY ID
     </select>
 </mapper>

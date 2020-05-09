@@ -1,9 +1,10 @@
 package com.diligrp.xtrade.upay.trade.domain;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
-public class Payment {
+public class Payment extends HashMap<String, Object> {
     // 交易ID
     private String tradeId;
     // 资金账号ID
@@ -12,12 +13,15 @@ public class Payment {
     private Long amount;
     // 支付渠道
     private Integer channelId;
-    // 银行卡号-用于银行渠道进行圈存圈提
-    private String cardNo;
-    // 备注
-    private String description;
-    // 费用列表
-    private List<Fee> fees;
+
+    public static Payment of(String tradeId, Long accountId, Long amount, Integer channelId) {
+        Payment transaction = new Payment();
+        transaction.setTradeId(tradeId);
+        transaction.setAccountId(accountId);
+        transaction.setAmount(amount);
+        transaction.setChannelId(channelId);
+        return transaction;
+    }
 
     public String getTradeId() {
         return tradeId;
@@ -51,27 +55,40 @@ public class Payment {
         this.channelId = channelId;
     }
 
-    public String getCardNo() {
-        return cardNo;
+    public String getString(String param) {
+        return (String)get(param);
     }
 
-    public void setCardNo(String cardNo) {
-        this.cardNo = cardNo;
+    public Long getLong(String param) {
+        Object value = get(param);
+        if (value != null) {
+            return value instanceof Long ? (Long)value : Long.parseLong(value.toString());
+        }
+        return null;
     }
 
-    public String getDescription() {
-        return description;
+    public Integer getInteger(String param) {
+        Object value = get(param);
+        if (value != null) {
+            return value instanceof Integer ? (Integer)value : Integer.parseInt(value.toString());
+        }
+        return null;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public <T> T getObject(String param, Class<T> type) {
+        Object value = get(param);
+        return value == null ? null : type.cast(value);
     }
 
-    public List<Fee> getFees() {
-        return fees == null ? Collections.EMPTY_LIST : fees;
+    @SuppressWarnings("unchecked")
+    public <T> Optional<T> getObject(String param) {
+        Object value = get(param);
+        return Optional.ofNullable ((T) value);
     }
 
-    public void setFees(List<Fee> fees) {
-        this.fees = fees;
+    @SuppressWarnings("unchecked")
+    public <T> Optional<List<T>> getObjects(String param) {
+        Object value = get(param);
+        return Optional.ofNullable ((List<T>) value);
     }
 }

@@ -33,4 +33,13 @@
     <select id="findTradeOrderById" parameterType="string" resultMap="TradeOrderMap">
         SELECT * FROM upay_trade_order WHERE trade_id = #{tradeId}
     </select>
+
+    <update id="compareAndSetState" parameterType="com.diligrp.xtrade.upay.trade.domain.TradeStateDto">
+        UPDATE
+          upay_trade_order
+        SET
+          state = #{state}, modified_time = #{modifiedTime}, version = version + 1
+        WHERE
+          trade_id = #{tradeId} AND version = #{version}
+    </update>
 </mapper>
