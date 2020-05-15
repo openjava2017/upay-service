@@ -213,6 +213,7 @@ CREATE TABLE `upay_trade_fee` (
   `trade_id` VARCHAR(40) NOT NULL COMMENT '交易ID',
   `amount` BIGINT NOT NULL COMMENT '金额-分',
   `type` TINYINT UNSIGNED NOT NULL COMMENT '费用类型',
+  `type_name` VARCHAR(80) COMMENT '费用描述',
   `created_time` DATETIME COMMENT '创建时间',
   PRIMARY KEY (`id`),
   KEY `idx_trade_fee_tradeId` (`trade_id`) USING BTREE
@@ -228,6 +229,7 @@ CREATE TABLE `upay_payment_fee` (
   `payment_id` VARCHAR(40) NOT NULL COMMENT '支付ID',
   `amount` BIGINT NOT NULL COMMENT '金额-分',
   `type` TINYINT UNSIGNED NOT NULL COMMENT '费用类型',
+  `type_name` VARCHAR(80) COMMENT '费用描述',
   `created_time` DATETIME COMMENT '创建时间',
   PRIMARY KEY (`id`),
   KEY `idx_payment_fee_paymentId` (`payment_id`) USING BTREE
@@ -241,8 +243,8 @@ CREATE TABLE `upay_payment_fee` (
 -- 资金流水的交易类型标识由哪种业务产生，包括：充值、提现、交易等。
 -- 创建时间=冻结时间，修改时间=解冻时间，当交易冻结操作人信息为资金账号，否则外部传入
 -- --------------------------------------------------------------------
-DROP TABLE IF EXISTS `upay_frozen_transaction`;
-CREATE TABLE `upay_frozen_transaction` (
+DROP TABLE IF EXISTS `upay_frozen_order`;
+CREATE TABLE `upay_frozen_order` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `frozen_id` BIGINT NOT NULL COMMENT '冻结ID',
   `payment_id` VARCHAR(40) COMMENT '支付ID',
@@ -252,15 +254,15 @@ CREATE TABLE `upay_frozen_transaction` (
   `amount` BIGINT NOT NULL COMMENT '金额-分',
   `state` TINYINT UNSIGNED NOT NULL COMMENT '冻结状态-冻结 解冻',
   `user_id` BIGINT COMMENT '操作人',
-  `user_name` VARCHAR(20) COMMENT '操作人名称',
+  `user_name` VARCHAR(40) COMMENT '操作人名称',
   `description` VARCHAR(128) COMMENT '备注',
   `version` INTEGER UNSIGNED NOT NULL COMMENT '数据版本号',
   `created_time` DATETIME COMMENT '创建时间',
   `modified_time` DATETIME COMMENT '修改时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `udx_frozen_transaction_frozenId` (`frozen_id`) USING BTREE,
-  KEY `idx_frozen_transaction_paymentId` (`payment_id`) USING BTREE,
-  KEY `idx_frozen_transaction_accountId` (`account_id`, `type`) USING BTREE
+  UNIQUE KEY `udx_frozen_order_frozenId` (`frozen_id`) USING BTREE,
+  KEY `idx_frozen_order_paymentId` (`payment_id`) USING BTREE,
+  KEY `idx_frozen_order_accountId` (`account_id`, `type`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------------------

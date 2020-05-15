@@ -9,6 +9,10 @@ public class ErrorCode {
     public static final int OPERATION_NOT_ALLOWED = 500002;
     // 数据并发修改
     public static final int DATA_CONCURRENT_UPDATED = 500003;
+    // 对象不存在
+    public static final int OBJECT_NOT_FOUND = 500004;
+    // 无效状态
+    public static final int INVALID_OBJECT_STATE = 500005;
     // 服务不存在
     public static final int SERVICE_NOT_AVAILABLE = 501001;
     // 访问未授权

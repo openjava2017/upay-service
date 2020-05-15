@@ -25,11 +25,6 @@ public class TradeServiceComponent {
         AssertUtils.notNull(trade.getAccountId(), "accountId missed");
         AssertUtils.notNull(trade.getAmount(), "amount missed");
         AssertUtils.isTrue(trade.getAmount() > 0, "Invalid amount");
-        // 费用参数校验
-        trade.fees().ifPresent(fees -> fees.stream().forEach(fee -> {
-            AssertUtils.notNull(fee.getAmount(), "fee amount missed");
-            AssertUtils.isTrue(fee.getAmount() > 0, "Invalid fee amount");
-        }));
 
         Application application = request.getContext().getObject(Application.class.getName(), Application.class);
         String tradeId = paymentPlatformService.createTrade(application, trade);
@@ -41,14 +36,12 @@ public class TradeServiceComponent {
         // 基本参数校验
         AssertUtils.notNull(payment.getTradeId(), "tradeId missed");
         AssertUtils.notNull(payment.getAccountId(), "accountId missed");
-        AssertUtils.notNull(payment.getAmount(), "amount missed");
-        AssertUtils.isTrue(payment.getAmount() > 0, "Invalid amount");
         AssertUtils.notNull(payment.getChannelId(), "channelId missed");
         // 费用参数校验
-        payment.getFees().stream().forEach(fee -> {
+        payment.fees().ifPresent(fees -> fees.stream().forEach(fee -> {
             AssertUtils.notNull(fee.getAmount(), "fee amount missed");
             AssertUtils.isTrue(fee.getAmount() > 0, "Invalid fee amount");
-        });
+        }));
 
         Application application = request.getContext().getObject(Application.class.getName(), Application.class);
         String paymentId = paymentPlatformService.commit(application, payment);

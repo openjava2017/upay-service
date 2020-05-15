@@ -11,36 +11,34 @@ import java.util.stream.Stream;
  * @author: brenthuang
  * @date: 2020/03/24
  */
-public enum ChannelType implements IEnumType {
+public enum FrozenState implements IEnumType {
 
-    ACCOUNT("账户渠道", 1),
+    FROZEN("冻结", 1),
 
-    CASH("现金渠道", 2),
-
-    POS("POS渠道", 3);
+    UNFROZEN("解冻", 2);
 
     private String name;
     private int code;
 
-    ChannelType(String name, int code) {
+    FrozenState(String name, int code) {
         this.name = name;
         this.code = code;
     }
 
-    public static Optional<ChannelType> getType(int code) {
-        Stream<ChannelType> TYPES = Arrays.stream(ChannelType.values());
-        return TYPES.filter(type -> type.getCode() == code).findFirst();
+    public static Optional<FrozenState> getType(int code) {
+        Stream<FrozenState> STATES = Arrays.stream(FrozenState.values());
+        return STATES.filter(state -> state.getCode() == code).findFirst();
     }
 
     public static String getName(int code) {
-        Stream<ChannelType> TYPES = Arrays.stream(ChannelType.values());
-        Optional<String> result = TYPES.filter(type -> type.getCode() == code)
-                .map(ChannelType::getName).findFirst();
+        Stream<FrozenState> STATES = Arrays.stream(FrozenState.values());
+        Optional<String> result = STATES.filter(state -> state.getCode() == code)
+                .map(FrozenState::getName).findFirst();
         return result.isPresent() ? result.get() : null;
     }
 
-    public static List<ChannelType> getTypeList() {
-        return Arrays.asList(ChannelType.values());
+    public static List<FrozenState> getStateList() {
+        return Arrays.asList(FrozenState.values());
     }
 
     @Override

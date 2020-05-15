@@ -11,36 +11,34 @@ import java.util.stream.Stream;
  * @author: brenthuang
  * @date: 2020/03/24
  */
-public enum ChannelType implements IEnumType {
+public enum FrozenType implements IEnumType {
 
-    ACCOUNT("账户渠道", 1),
+    TRADE_FROZEN("交易冻结", 1),
 
-    CASH("现金渠道", 2),
-
-    POS("POS渠道", 3);
+    SYSTEM_FROZEN("系统冻结", 2);
 
     private String name;
     private int code;
 
-    ChannelType(String name, int code) {
+    FrozenType(String name, int code) {
         this.name = name;
         this.code = code;
     }
 
-    public static Optional<ChannelType> getType(int code) {
-        Stream<ChannelType> TYPES = Arrays.stream(ChannelType.values());
+    public static Optional<FrozenType> getType(int code) {
+        Stream<FrozenType> TYPES = Arrays.stream(FrozenType.values());
         return TYPES.filter(type -> type.getCode() == code).findFirst();
     }
 
     public static String getName(int code) {
-        Stream<ChannelType> TYPES = Arrays.stream(ChannelType.values());
+        Stream<FrozenType> TYPES = Arrays.stream(FrozenType.values());
         Optional<String> result = TYPES.filter(type -> type.getCode() == code)
-                .map(ChannelType::getName).findFirst();
+                .map(FrozenType::getName).findFirst();
         return result.isPresent() ? result.get() : null;
     }
 
-    public static List<ChannelType> getTypeList() {
-        return Arrays.asList(ChannelType.values());
+    public static List<FrozenType> getTypeList() {
+        return Arrays.asList(FrozenType.values());
     }
 
     @Override

@@ -1,8 +1,5 @@
 package com.diligrp.xtrade.upay.trade.domain;
 
-import java.util.List;
-import java.util.Optional;
-
 public class TradeRequest {
     // 交易类型
     private Integer type;
@@ -16,8 +13,6 @@ public class TradeRequest {
     private String cycleNo;
     // 备注
     private String description;
-    // 费用列表
-    private List<Fee> fees;
 
     public Integer getType() {
         return type;
@@ -65,17 +60,5 @@ public class TradeRequest {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public List<Fee> getFees() {
-        return fees;
-    }
-
-    public void setFees(List<Fee> fees) {
-        this.fees = fees;
-    }
-
-    public Optional<List<Fee>> fees() {
-        return Optional.ofNullable(fees);
     }
 }

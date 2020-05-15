@@ -77,7 +77,7 @@ public class DefaultFundStreamEngine implements IFundStreamEngine {
                 .accountId(transaction.getAccountId()).childId(0L)
                 .action(ActionType.getByAmount(activity.getAmount()).getCode()).type(transaction.getType())
                 .balance(balance.getAndAdd(activity.getAmount())).amount(activity.getAmount())
-                .fundType(activity.getFundType()).description(activity.getDescription())
+                .fundType(activity.getType()).description(activity.getTypeName())
                 .createdTime(transaction.getWhen()).build())
             .collect(Collectors.toList());
         fundStatementDao.insertFundStatements(statements);
@@ -113,7 +113,7 @@ public class DefaultFundStreamEngine implements IFundStreamEngine {
                 .accountId(transaction.getAccountId()).childId(0L)
                 .action(ActionType.getByAmount(activity.getAmount()).getCode()).type(transaction.getType())
                 .balance(balance.getAndAdd(activity.getAmount())).amount(activity.getAmount())
-                .fundType(activity.getFundType()).description(activity.getDescription())
+                .fundType(activity.getType()).description(activity.getTypeName())
                 .createdTime(transaction.getWhen()).build())
             .collect(Collectors.toList());
         fundStatementDao.insertFundStatements(statements);

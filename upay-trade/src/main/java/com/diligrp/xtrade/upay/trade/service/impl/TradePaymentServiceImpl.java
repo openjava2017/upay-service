@@ -1,17 +1,16 @@
 package com.diligrp.xtrade.upay.trade.service.impl;
 
 import com.diligrp.xtrade.upay.channel.domain.AccountChannel;
+import com.diligrp.xtrade.upay.channel.domain.IFundTransaction;
 import com.diligrp.xtrade.upay.channel.service.IAccountChannelService;
 import com.diligrp.xtrade.upay.channel.type.ChannelType;
 import com.diligrp.xtrade.upay.core.ErrorCode;
-import com.diligrp.xtrade.upay.core.model.AccountFund;
 import com.diligrp.xtrade.upay.trade.dao.ITradeFeeDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradeOrderDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradePaymentDao;
 import com.diligrp.xtrade.upay.trade.domain.*;
 import com.diligrp.xtrade.upay.trade.exception.TradePaymentException;
 import com.diligrp.xtrade.upay.trade.model.PaymentFee;
-import com.diligrp.xtrade.upay.trade.model.TradeFee;
 import com.diligrp.xtrade.upay.trade.model.TradeOrder;
 import com.diligrp.xtrade.upay.trade.model.TradePayment;
 import com.diligrp.xtrade.upay.trade.service.IPaymentService;
@@ -54,43 +53,35 @@ public class TradePaymentServiceImpl implements IPaymentService {
         if (trade.getAccountId().equals(payment.getAccountId())) {
             throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "同一账号不能进行交易");
         }
-
-        List<TradeFee> tradeFees = Collections.emptyList();
-        if (trade.getFee() > 0) {
-            tradeFees = tradeFeeDao.findTradeFees(trade.getTradeId());
-        }
-        Optional<List<Fee>> paymentFeeOpt = payment.getObjects(Fee.class.getName());
-        List<Fee> paymentFees = paymentFeeOpt.orElse(Collections.emptyList());
+        Optional<List<Fee>> feesOpt = payment.getObjects(Fee.class.getName());
+        List<Fee> fees = feesOpt.orElse(Collections.emptyList());
 
         // 处理买家付款
         LocalDateTime now = LocalDateTime.now();
         String paymentId = trade.getTradeId();
-        AccountChannel sellerChannel = AccountChannel.of(paymentId, payment.getAccountId(), trade.getType(), now);
-        sellerChannel.outgo(trade.getAmount(), FundType.FUND.getCode(), TradeType.getName(trade.getType()));
-        paymentFees.forEach(fee -> {
-            sellerChannel.outgo(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()));
-        });
-        accountChannelService.submit(sellerChannel);
+        AccountChannel buyerChannel = AccountChannel.of(paymentId, payment.getAccountId());
+        IFundTransaction buyerTransaction = buyerChannel.openTransaction(trade.getType(), now);
+        buyerTransaction.outgo(trade.getAmount(), FundType.FUND.getCode(), TradeType.getName(trade.getType()));
+        accountChannelService.submit(buyerTransaction);
 
         // 处理卖家收款
-        AccountChannel buyerChannel = AccountChannel.of(paymentId, trade.getAccountId(), trade.getType(), now);
-        buyerChannel.income(trade.getAmount(), FundType.FUND.getCode(), TradeType.getName(trade.getType()));
-        tradeFees.forEach(fee -> {
-            buyerChannel.outgo(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()));
+        AccountChannel sellerChannel = AccountChannel.of(paymentId, trade.getAccountId());
+        IFundTransaction sellerTransaction = sellerChannel.openTransaction(trade.getType(), now);
+        sellerTransaction.income(trade.getAmount(), FundType.FUND.getCode(), TradeType.getName(trade.getType()));
+        fees.forEach(fee -> {
+            sellerTransaction.outgo(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()));
         });
-        accountChannelService.submit(buyerChannel);
+        accountChannelService.submit(sellerTransaction);
 
         // 处理商户收益
-        if (!tradeFees.isEmpty() || !paymentFees.isEmpty()) {
+        if (!fees.isEmpty()) {
             Merchant merchant = payment.getObject(Merchant.class.getName(), Merchant.class);
-            AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount(), trade.getType(), now);
-            tradeFees.forEach(fee ->
-                merChannel.income(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()))
+            AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount());
+            IFundTransaction merTransaction = merChannel.openTransaction(trade.getType(), now);
+            fees.forEach(fee ->
+                merTransaction.income(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()))
             );
-            paymentFees.forEach(fee ->
-                merChannel.income(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()))
-            );
-            accountChannelService.submit(merChannel);
+            accountChannelService.submit(merTransaction);
         }
 
         TradeStateDto tradeState = TradeStateDto.of(trade.getTradeId(), TradeState.SUCCESS.getCode(),
@@ -100,14 +91,14 @@ public class TradePaymentServiceImpl implements IPaymentService {
             throw new TradePaymentException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统正忙，请稍后重试");
         }
 
-        long totalFees = paymentFees.stream().mapToLong(Fee::getAmount).sum();
+        long totalFees = fees.stream().mapToLong(Fee::getAmount).sum();
         TradePayment paymentDo = TradePayment.builder().paymentId(paymentId).tradeId(trade.getTradeId())
             .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
             .amount(payment.getAmount()).fee(totalFees).state(PaymentState.SUCCESS.getCode()).description(null)
             .version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
-        if (!paymentFees.isEmpty()) {
-            List<PaymentFee> paymentFeeDos = paymentFees.stream().map(fee ->
+        if (!fees.isEmpty()) {
+            List<PaymentFee> paymentFeeDos = fees.stream().map(fee ->
                     PaymentFee.of(paymentId, fee.getAmount(), fee.getType(), now)
             ).collect(Collectors.toList());
             tradeFeeDao.insertPaymentFees(paymentFeeDos);

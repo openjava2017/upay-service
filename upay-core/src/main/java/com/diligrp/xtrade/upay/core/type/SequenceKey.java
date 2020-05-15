@@ -3,5 +3,7 @@ package com.diligrp.xtrade.upay.core.type;
 public enum SequenceKey {
     FUND_ACCOUNT,
 
-    TRADE_ID
+    TRADE_ID,
+
+    FROZEN_ID;
 }

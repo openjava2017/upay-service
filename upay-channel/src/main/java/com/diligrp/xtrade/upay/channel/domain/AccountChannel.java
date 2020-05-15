@@ -1,113 +1,99 @@
 package com.diligrp.xtrade.upay.channel.domain;
 
+import com.diligrp.xtrade.shared.util.AssertUtils;
+import com.diligrp.xtrade.upay.core.domain.FrozenTransaction;
+import com.diligrp.xtrade.upay.core.domain.FundActivity;
+import com.diligrp.xtrade.upay.core.domain.FundTransaction;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Optional;
 
 public class AccountChannel {
     // 支付ID
     private String paymentId;
     // 资金账号ID
     private long accountId;
-    // 业务类型
-    private int type;
-    // 发生时间
-    private LocalDateTime when;
-    // 资金流
-    private List<ChannelFund> funds = new ArrayList<>();
+
+    public AccountChannel(String paymentId, long accountId) {
+        this.paymentId = paymentId;
+        this.accountId = accountId;
+    }
 
     public String getPaymentId() {
         return paymentId;
-    }
-
-    public void setPaymentId(String paymentId) {
-        this.paymentId = paymentId;
     }
 
     public long getAccountId() {
         return accountId;
     }
 
-    public void setAccountId(long accountId) {
-        this.accountId = accountId;
+    public IFundTransaction openTransaction(int type, LocalDateTime when) {
+        return new ChannelFundTransaction(type, when);
     }
 
-    public int getType() {
-        return type;
+    public static AccountChannel of(String paymentId, long accountId) {
+        return new AccountChannel(paymentId, accountId);
     }
 
-    public void setType(int type) {
-        this.type = type;
-    }
-
-    public LocalDateTime getWhen() {
-        return when;
-    }
-
-    public void setWhen(LocalDateTime when) {
-        this.when = when;
-    }
-
-    public void income(long amount, int type, String typeName) {
-        funds.add(ChannelFund.of(amount, type, typeName));
-    }
-
-    public void outgo(long amount, int type, String typeName) {
-        funds.add(ChannelFund.of(- amount, type, typeName));
-    }
-
-    public Stream<ChannelFund> fundStream() {
-        return funds.stream();
-    }
-
-    public static class ChannelFund {
-        // 金额 - 分
-        private long amount;
-        // 类型
+    public class ChannelFundTransaction implements IFundTransaction {
+        // 业务类型 - 资金冻结时不使用
         private int type;
-        // 类型名称
-        private String typeName;
+        // 冻结金额 - 正数时为资金冻结, 负数时为资金解冻
+        private long frozenAmount = 0;
+        // 资金流
+        private List<FundActivity> funds = new ArrayList<>();
+        // 发生时间
+        private LocalDateTime when;
 
-        public long getAmount() {
-            return amount;
-        }
-
-        public void setAmount(long amount) {
-            this.amount = amount;
-        }
-
-        public int getType() {
-            return type;
-        }
-
-        public void setType(int type) {
+        public ChannelFundTransaction(int type, LocalDateTime when) {
             this.type = type;
+            this.when = when;
         }
 
-        public String getTypeName() {
-            return typeName;
+        @Override
+        public void income(long amount, int type, String typeName) {
+            AssertUtils.isTrue(amount > 0, "Invalid amount");
+            funds.add(FundActivity.of(amount, type, typeName));
         }
 
-        public void setTypeName(String typeName) {
-            this.typeName = typeName;
+        @Override
+        public void outgo(long amount, int type, String typeName) {
+            AssertUtils.isTrue(amount > 0, "Invalid amount");
+            funds.add(FundActivity.of(-amount, type, typeName));
         }
 
-        public static ChannelFund of(long amount, int type, String typeName) {
-            ChannelFund fund = new ChannelFund();
-            fund.setAmount(amount);
-            fund.setType(type);
-            fund.setTypeName(typeName);
-            return fund;
+        @Override
+        public void freeze(long amount) {
+            AssertUtils.isTrue(amount > 0, "Invalid amount");
+            this.frozenAmount =+ amount;
         }
-    }
 
-    public static AccountChannel of(String paymentId, long accountId, int type, LocalDateTime when) {
-        AccountChannel channel = new AccountChannel();
-        channel.setPaymentId(paymentId);
-        channel.setAccountId(accountId);
-        channel.setType(type);
-        channel.setWhen(when);
-        return channel;
+        @Override
+        public void unfreeze(long amount) {
+            AssertUtils.isTrue(amount > 0, "Invalid amount");
+            this.frozenAmount =- amount;
+        }
+
+        @Override
+        public Optional<FundTransaction> fundTransaction() {
+            if (funds.isEmpty()) {
+                return Optional.ofNullable(null);
+            }
+            AssertUtils.notEmpty(paymentId, "paymentId missed");
+
+            FundActivity[] fundActivities = funds.toArray(new FundActivity[funds.size()]);
+            return Optional.of(FundTransaction.of(paymentId, accountId, type, fundActivities, when));
+        }
+
+        @Override
+        public Optional<FrozenTransaction> frozenTransaction() {
+            if (frozenAmount == 0) {
+                return Optional.ofNullable(null);
+            }
+
+            return Optional.of(FrozenTransaction.of(accountId, frozenAmount, when));
+        }
     }
 }

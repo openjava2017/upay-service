@@ -2,14 +2,13 @@ package com.diligrp.xtrade.upay.trade.domain;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class PaymentRequest {
     // 交易ID
     private String tradeId;
     // 资金账号ID
     private Long accountId;
-    // 支付金额
-    private Long amount;
     // 支付渠道
     private Integer channelId;
     // 银行卡号-用于银行渠道进行圈存圈提
@@ -31,14 +30,6 @@ public class PaymentRequest {
 
     public void setAccountId(Long accountId) {
         this.accountId = accountId;
-    }
-
-    public Long getAmount() {
-        return amount;
-    }
-
-    public void setAmount(Long amount) {
-        this.amount = amount;
     }
 
     public Integer getChannelId() {
@@ -63,5 +54,9 @@ public class PaymentRequest {
 
     public void setFees(List<Fee> fees) {
         this.fees = fees;
+    }
+
+    public Optional<List<Fee>> fees() {
+        return Optional.ofNullable(fees);
     }
 }

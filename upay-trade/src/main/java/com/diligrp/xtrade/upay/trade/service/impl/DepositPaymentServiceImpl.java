@@ -8,12 +8,9 @@ import com.diligrp.xtrade.upay.core.model.AccountFund;
 import com.diligrp.xtrade.upay.trade.dao.ITradeFeeDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradeOrderDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradePaymentDao;
-import com.diligrp.xtrade.upay.trade.domain.Merchant;
-import com.diligrp.xtrade.upay.trade.domain.Payment;
-import com.diligrp.xtrade.upay.trade.domain.PaymentResult;
-import com.diligrp.xtrade.upay.trade.domain.TradeStateDto;
+import com.diligrp.xtrade.upay.trade.domain.*;
 import com.diligrp.xtrade.upay.trade.exception.TradePaymentException;
-import com.diligrp.xtrade.upay.trade.model.TradeFee;
+import com.diligrp.xtrade.upay.trade.model.PaymentFee;
 import com.diligrp.xtrade.upay.trade.model.TradeOrder;
 import com.diligrp.xtrade.upay.trade.model.TradePayment;
 import com.diligrp.xtrade.upay.trade.service.IPaymentService;
@@ -29,6 +26,8 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service("depositPaymentService")
 public class DepositPaymentServiceImpl implements IPaymentService {
@@ -55,29 +54,29 @@ public class DepositPaymentServiceImpl implements IPaymentService {
             throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "充值账号不一致");
         }
 
-        List<TradeFee> tradeFees = Collections.emptyList();
-        if (trade.getFee() > 0) {
-            tradeFees = tradeFeeDao.findTradeFees(trade.getTradeId());
-        }
+        Optional<List<Fee>> feesOpt = payment.getObjects(Fee.class.getName());
+        List<Fee> fees = feesOpt.orElseGet(Collections::emptyList);
 
         // 处理个人充值
         String paymentId = trade.getTradeId();
         LocalDateTime now = LocalDateTime.now();
-        AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId(), trade.getType(), now);
-        channel.income(trade.getAmount(), FundType.FUND.getCode(), typeName(payment.getChannelId()));
-        tradeFees.forEach(fee -> {
-            channel.outgo(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()));
+        AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId());
+        IFundTransaction transaction = channel.openTransaction(trade.getType(), now);
+        transaction.income(trade.getAmount(), FundType.FUND.getCode(), typeName(payment.getChannelId()));
+        fees.forEach(fee -> {
+            transaction.outgo(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()));
         });
-        AccountFund fund = accountChannelService.submit(channel);
+        AccountFund fund = accountChannelService.submit(transaction);
 
         // 处理商户收益
-        if (!tradeFees.isEmpty()) {
+        if (!fees.isEmpty()) {
             Merchant merchant = payment.getObject(Merchant.class.getName(), Merchant.class);
-            AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount(), trade.getType(), now);
-            tradeFees.forEach(fee ->
-                merChannel.income(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()))
+            AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount());
+            IFundTransaction feeTransaction = merChannel.openTransaction(trade.getType(), now);
+            fees.forEach(fee ->
+                feeTransaction.income(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()))
             );
-            accountChannelService.submit(merChannel);
+            accountChannelService.submit(feeTransaction);
         }
 
         TradeStateDto tradeState = TradeStateDto.of(trade.getTradeId(), TradeState.SUCCESS.getCode(),
@@ -86,11 +85,18 @@ public class DepositPaymentServiceImpl implements IPaymentService {
         if (result == 0) {
             throw new TradePaymentException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统正忙，请稍后重试");
         }
+        long totalFee = fees.stream().mapToLong(Fee::getAmount).sum();
         TradePayment paymentDo = TradePayment.builder().paymentId(paymentId).tradeId(trade.getTradeId())
                 .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
-                .amount(payment.getAmount()).fee(0L).state(PaymentState.SUCCESS.getCode()).description(null)
+                .amount(payment.getAmount()).fee(totalFee).state(PaymentState.SUCCESS.getCode()).description(null)
                 .version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
+        if (!fees.isEmpty()) {
+            List<PaymentFee> paymentFeeDos = fees.stream().map(fee ->
+                    PaymentFee.of(paymentId, fee.getAmount(), fee.getType(), now)
+            ).collect(Collectors.toList());
+            tradeFeeDao.insertPaymentFees(paymentFeeDos);
+        }
 
         return PaymentResult.of(paymentId, TradeState.SUCCESS.getCode(), fund);
     }

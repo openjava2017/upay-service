@@ -4,9 +4,9 @@ public class FundActivity {
     // 金额 - 分（正数或负数）
     private long amount;
     // 资金类型
-    private int fundType;
+    private int type;
     // 资金描述
-    private String description;
+    private String typeName;
 
     public long getAmount() {
         return amount;
@@ -16,27 +16,27 @@ public class FundActivity {
         this.amount = amount;
     }
 
-    public int getFundType() {
-        return fundType;
+    public int getType() {
+        return type;
     }
 
-    public void setFundType(int fundType) {
-        this.fundType = fundType;
+    public void setType(int type) {
+        this.type = type;
     }
 
-    public String getDescription() {
-        return description;
+    public String getTypeName() {
+        return typeName;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setTypeName(String typeName) {
+        this.typeName = typeName;
     }
 
-    public static FundActivity of(long amount, int fundType, String description) {
+    public static FundActivity of(long amount, int type, String typeName) {
         FundActivity activity = new FundActivity();
         activity.setAmount(amount);
-        activity.setFundType(fundType);
-        activity.setDescription(description);
+        activity.setType(type);
+        activity.setTypeName(typeName);
         return activity;
     }
 }
