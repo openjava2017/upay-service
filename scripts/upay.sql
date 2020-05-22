@@ -253,15 +253,13 @@ CREATE TABLE `upay_frozen_order` (
   `type` TINYINT UNSIGNED NOT NULL COMMENT '冻结类型-系统冻结 交易冻结',
   `amount` BIGINT NOT NULL COMMENT '金额-分',
   `state` TINYINT UNSIGNED NOT NULL COMMENT '冻结状态-冻结 解冻',
-  `user_id` BIGINT COMMENT '操作人',
-  `user_name` VARCHAR(40) COMMENT '操作人名称',
   `description` VARCHAR(128) COMMENT '备注',
   `version` INTEGER UNSIGNED NOT NULL COMMENT '数据版本号',
   `created_time` DATETIME COMMENT '创建时间',
   `modified_time` DATETIME COMMENT '修改时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `udx_frozen_order_frozenId` (`frozen_id`) USING BTREE,
-  KEY `idx_frozen_order_paymentId` (`payment_id`) USING BTREE,
+  UNIQUE KEY `udx_frozen_order_paymentId` (`payment_id`) USING BTREE,
   KEY `idx_frozen_order_accountId` (`account_id`, `type`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

@@ -19,10 +19,6 @@ public class FrozenOrder extends BaseDo {
     private Long amount;
     // 状态-冻结 解冻
     private Integer state;
-    // 操作人
-    private Long userId;
-    // 操作人名称
-    private String userName;
     // 备注
     private String description;
     // 数据版本号
@@ -84,22 +80,6 @@ public class FrozenOrder extends BaseDo {
         this.state = state;
     }
 
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
     public String getDescription() {
         return description;
     }
@@ -153,16 +133,6 @@ public class FrozenOrder extends BaseDo {
 
         public Builder state(Integer state) {
             FrozenOrder.this.state = state;
-            return this;
-        }
-
-        public Builder userId(Long userId) {
-            FrozenOrder.this.userId = userId;
-            return this;
-        }
-
-        public Builder userName(String userName) {
-            FrozenOrder.this.userName = userName;
             return this;
         }
 

@@ -5,7 +5,6 @@ import com.diligrp.xtrade.shared.sapi.CallableComponent;
 import com.diligrp.xtrade.shared.util.AssertUtils;
 import com.diligrp.xtrade.upay.boss.domain.FrozenId;
 import com.diligrp.xtrade.upay.channel.domain.FreezeFundDto;
-import com.diligrp.xtrade.upay.channel.domain.UnfreezeFundDto;
 import com.diligrp.xtrade.upay.channel.service.IFrozenOrderService;
 import com.diligrp.xtrade.upay.channel.type.FrozenType;
 
@@ -26,9 +25,9 @@ public class FundServiceComponent {
         return FrozenId.of(id);
     }
 
-    public void unfreeze(ServiceRequest<UnfreezeFundDto> request) {
-        UnfreezeFundDto unfreezeFund = request.getData();
-        AssertUtils.notNull(unfreezeFund.getFrozenId(), "frozenId missed");
-        frozenOrderService.unfreeze(unfreezeFund);
+    public void unfreeze(ServiceRequest<FrozenId> request) {
+        FrozenId frozenId = request.getData();
+        AssertUtils.notNull(frozenId.getFrozenId(), "frozenId missed");
+        frozenOrderService.unfreeze(frozenId.getFrozenId());
     }
 }

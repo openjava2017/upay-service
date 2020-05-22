@@ -2,22 +2,18 @@ package com.diligrp.xtrade.upay.channel.domain;
 
 import java.time.LocalDateTime;
 
-public class UpdateFrozenState {
+public class FrozenStateDto {
     // 冻结ID
     private Long frozenId;
     // 状态 - 冻结、解冻
     private Integer state;
-    // 操作员
-    private Long userId;
-    // 操作员名称
-    private String userName;
     // 数据版本
     private Integer version;
     // 修改时间
     private LocalDateTime modifiedTime;
 
-    public static UpdateFrozenState of(Long frozenId, Integer state, Integer version, LocalDateTime modifiedTime) {
-        UpdateFrozenState updateState = new UpdateFrozenState();
+    public static FrozenStateDto of(Long frozenId, Integer state, Integer version, LocalDateTime modifiedTime) {
+        FrozenStateDto updateState = new FrozenStateDto();
         updateState.setFrozenId(frozenId);
         updateState.setState(state);
         updateState.setVersion(version);
@@ -39,22 +35,6 @@ public class UpdateFrozenState {
 
     public void setState(Integer state) {
         this.state = state;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
     }
 
     public Integer getVersion() {

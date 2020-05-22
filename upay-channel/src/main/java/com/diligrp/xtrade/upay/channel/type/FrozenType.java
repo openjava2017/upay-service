@@ -12,9 +12,9 @@ import java.util.stream.Stream;
  * @date: 2020/03/24
  */
 public enum FrozenType implements IEnumType {
-
+    // 内部交易冻结
     TRADE_FROZEN("交易冻结", 1),
-
+    // 柜台人工冻结
     SYSTEM_FROZEN("系统冻结", 2);
 
     private String name;

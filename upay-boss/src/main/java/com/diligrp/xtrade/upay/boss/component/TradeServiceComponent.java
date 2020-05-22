@@ -2,13 +2,16 @@ package com.diligrp.xtrade.upay.boss.component;
 
 import com.diligrp.xtrade.shared.domain.ServiceRequest;
 import com.diligrp.xtrade.shared.sapi.CallableComponent;
+import com.diligrp.xtrade.shared.security.PasswordUtils;
 import com.diligrp.xtrade.shared.util.AssertUtils;
 import com.diligrp.xtrade.upay.boss.domain.PaymentId;
 import com.diligrp.xtrade.upay.boss.domain.TradeId;
 import com.diligrp.xtrade.upay.trade.domain.Application;
 import com.diligrp.xtrade.upay.trade.domain.PaymentRequest;
+import com.diligrp.xtrade.upay.trade.domain.PreTradeDto;
 import com.diligrp.xtrade.upay.trade.domain.TradeRequest;
 import com.diligrp.xtrade.upay.trade.service.IPaymentPlatformService;
+import com.diligrp.xtrade.upay.trade.service.IPreTradePaymentService;
 
 import javax.annotation.Resource;
 
@@ -18,6 +21,13 @@ public class TradeServiceComponent {
     @Resource
     private IPaymentPlatformService paymentPlatformService;
 
+    @Resource
+    private IPreTradePaymentService preTradePaymentService;
+
+    /**
+     * 创建交易订单，适用于所有交易业务
+     * @see com.diligrp.xtrade.upay.trade.type.TradeType
+     */
     public TradeId prepare(ServiceRequest<TradeRequest> request) {
         TradeRequest trade = request.getData();
         // 基本参数校验
@@ -31,6 +41,11 @@ public class TradeServiceComponent {
         return TradeId.of(tradeId);
     }
 
+    /**
+     * 交易订单提交支付，适用于所有交易业务
+     * 预支付交易提交支付时只是冻结资金，后续需要进一步调用confirm/cancel进行资金操作
+     * @see com.diligrp.xtrade.upay.trade.type.TradeType
+     */
     public PaymentId commit(ServiceRequest<PaymentRequest> request) {
         PaymentRequest payment = request.getData();
         // 基本参数校验
@@ -46,5 +61,36 @@ public class TradeServiceComponent {
         Application application = request.getContext().getObject(Application.class.getName(), Application.class);
         String paymentId = paymentPlatformService.commit(application, payment);
         return PaymentId.of(paymentId);
+    }
+
+    /**
+     * 确认预支付交易，只适用于预支付交易类型
+     * 预付支付交易需经历 prepare->commit->confirm/cancel三个阶段
+     * confirm阶段完成资金解冻与消费，消费金额可以小于等于冻结金额（原订单金额）
+     */
+    public void confirm(ServiceRequest<PreTradeDto> request) {
+        PreTradeDto preTrade = request.getData();
+        AssertUtils.notEmpty(preTrade.getPaymentId(), "paymentId missed");
+        AssertUtils.notNull(preTrade.getAmount(), "amount missed");
+        AssertUtils.isTrue(preTrade.getAmount() > 0, "Invalid amount");
+        AssertUtils.notEmpty(preTrade.getPassword(), "password missed");
+
+        preTradePaymentService.confirm(preTrade);
+    }
+
+    /**
+     * 取消预支付交易，只适用于预支付交易类型
+     * 预付支付交易需经历 prepare->commit->confirm/cancel三个阶段
+     * cancel阶段完成资金解冻，不进行任何消费
+     */
+    public void cancel(ServiceRequest<PaymentId> request) {
+        PaymentId paymentId = request.getData();
+        AssertUtils.notEmpty(paymentId.getPaymentId(), "paymentId missed");
+
+        preTradePaymentService.cancel(paymentId.getPaymentId());
+    }
+
+    public static void main(String[] args) {
+        System.out.println(PasswordUtils.encrypt("abcd1234", "F2DFF7F34007E55CA83D9CE01FDF7447"));
     }
 }

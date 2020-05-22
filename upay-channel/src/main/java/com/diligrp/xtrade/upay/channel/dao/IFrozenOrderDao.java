@@ -1,7 +1,7 @@
 package com.diligrp.xtrade.upay.channel.dao;
 
 import com.diligrp.xtrade.shared.mybatis.MybatisMapperSupport;
-import com.diligrp.xtrade.upay.channel.domain.UpdateFrozenState;
+import com.diligrp.xtrade.upay.channel.domain.FrozenStateDto;
 import com.diligrp.xtrade.upay.channel.model.FrozenOrder;
 import org.springframework.stereotype.Repository;
 
@@ -13,5 +13,7 @@ public interface IFrozenOrderDao extends MybatisMapperSupport {
 
     Optional<FrozenOrder> findFrozenOrderById(Long frozenId);
 
-    int compareAndSetState(UpdateFrozenState frozenState);
+    Optional<FrozenOrder> findFrozenOrderByPaymentId(String paymentId);
+
+    int compareAndSetState(FrozenStateDto frozenState);
 }

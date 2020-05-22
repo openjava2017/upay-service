@@ -13,13 +13,16 @@ public class Payment extends HashMap<String, Object> {
     private Long amount;
     // 支付渠道
     private Integer channelId;
+    // 支付密码
+    private String password;
 
-    public static Payment of(String tradeId, Long accountId, Long amount, Integer channelId) {
+    public static Payment of(String tradeId, Long accountId, Long amount, Integer channelId, String password) {
         Payment transaction = new Payment();
         transaction.setTradeId(tradeId);
         transaction.setAccountId(accountId);
         transaction.setAmount(amount);
         transaction.setChannelId(channelId);
+        transaction.setPassword(password);
         return transaction;
     }
 
@@ -53,6 +56,14 @@ public class Payment extends HashMap<String, Object> {
 
     public void setChannelId(Integer channelId) {
         this.channelId = channelId;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getString(String param) {

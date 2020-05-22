@@ -29,6 +29,8 @@ public class ErrorCode {
     public static final int ACCOUNT_NOT_FOUND = 503001;
     // 无效资金账号状态
     public static final int INVALID_ACCOUNT_STATE = 503002;
+    // 账号密码不正确
+    public static final int INVALID_ACCOUNT_PASSWORD = 503002;
     // 账户余额不足
     public static final int INSUFFICIENT_ACCOUNT_FUND = 503003;
     // 无效资金状态

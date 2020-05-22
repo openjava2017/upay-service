@@ -37,9 +37,12 @@ public class FrozenOrderServiceImpl implements IFrozenOrderService {
     @Resource
     private IAccountChannelService accountChannelService;
 
+    /**
+     *  人工冻结资金
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-    public Long freeze(FreezeFundDto request) {
+    public long freeze(FreezeFundDto request) {
         Optional<FrozenType> frozenTypeOpt = FrozenType.getType(request.getType());
         frozenTypeOpt.orElseThrow(() -> new PaymentChannelException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "不支持此冻结类型"));
         Optional<FundAccount> accountOpt = fundAccountDao.findFundAccountById(request.getAccountId());
@@ -55,21 +58,27 @@ public class FrozenOrderServiceImpl implements IFrozenOrderService {
         // 创建冻结资金订单
         IKeyGenerator keyGenerator = keyGeneratorManager.getKeyGenerator(SequenceKey.FROZEN_ID);
         long frozenId = keyGenerator.nextId();
-        FrozenOrder frozenOrder = FrozenOrder.builder().frozenId(frozenId).paymentId(request.getPaymentId())
+        FrozenOrder frozenOrder = FrozenOrder.builder().frozenId(frozenId).paymentId(null)
             .accountId(request.getAccountId()).name(account.getName()).type(request.getType())
-            .amount(request.getAmount()).state(FrozenState.FROZEN.getCode()).userId(request.getUserId())
-            .userName(request.getUserName()).description(request.getDescription()).version(0).createdTime(now).build();
+            .amount(request.getAmount()).state(FrozenState.FROZEN.getCode())
+            .description(request.getDescription()).version(0).createdTime(now).build();
         frozenOrderDao.insertFrozenOrder(frozenOrder);
         return frozenId;
     }
 
+    /**
+     *  人工解冻资金
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-    public void unfreeze(UnfreezeFundDto request) {
-        Optional<FrozenOrder> orderOpt = frozenOrderDao.findFrozenOrderById(request.getFrozenId());
+    public void unfreeze(Long frozenId) {
+        Optional<FrozenOrder> orderOpt = frozenOrderDao.findFrozenOrderById(frozenId);
         FrozenOrder order = orderOpt.orElseThrow(() -> new PaymentChannelException(ErrorCode.OBJECT_NOT_FOUND, "冻结订单不存在"));
         if (order.getState() != FrozenState.FROZEN.getCode()) {
-            throw new PaymentChannelException(ErrorCode.INVALID_OBJECT_STATE, "无效冻结状态，不能执行解冻操作");
+            throw new PaymentChannelException(ErrorCode.OPERATION_NOT_ALLOWED, "无效冻结状态，不能执行解冻操作");
+        }
+        if (order.getType() == FrozenType.TRADE_FROZEN.getCode()) {
+            throw new PaymentChannelException(ErrorCode.OPERATION_NOT_ALLOWED, "不能解冻交易冻结的资金");
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -78,10 +87,8 @@ public class FrozenOrderServiceImpl implements IFrozenOrderService {
         transaction.unfreeze(order.getAmount());
         accountChannelService.submit(transaction);
 
-        UpdateFrozenState updateState = UpdateFrozenState.of(request.getFrozenId(), FrozenState.UNFROZEN.getCode(),
+        FrozenStateDto updateState = FrozenStateDto.of(frozenId, FrozenState.UNFROZEN.getCode(),
                 order.getVersion(), now);
-        updateState.setUserId(request.getUserId());
-        updateState.setUserName(request.getUserName());
         if (frozenOrderDao.compareAndSetState(updateState) <= 0) {
             throw new PaymentChannelException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统忙，请稍后再试");
         }

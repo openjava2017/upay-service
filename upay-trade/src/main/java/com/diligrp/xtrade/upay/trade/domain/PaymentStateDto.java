@@ -2,9 +2,9 @@ package com.diligrp.xtrade.upay.trade.domain;
 
 import java.time.LocalDateTime;
 
-public class TradeStateDto {
-    // 交易ID
-    private String tradeId;
+public class PaymentStateDto {
+    // 支付ID
+    private String paymentId;
     // 金额 - 预支付交易或发生退款时需要更新实际付款金额
     private Long amount;
     // 状态
@@ -14,12 +14,26 @@ public class TradeStateDto {
     // 修改时间
     private LocalDateTime modifiedTime;
 
-    public String getTradeId() {
-        return tradeId;
+    public static PaymentStateDto of(String paymentId, Integer state, Integer version, LocalDateTime modifiedTime) {
+        return PaymentStateDto.of(paymentId, null, state, version, modifiedTime);
     }
 
-    public void setTradeId(String tradeId) {
-        this.tradeId = tradeId;
+    public static PaymentStateDto of(String paymentId, Long amount, Integer state, Integer version, LocalDateTime modifiedTime) {
+        PaymentStateDto paymentState = new PaymentStateDto();
+        paymentState.setPaymentId(paymentId);
+        paymentState.setAmount(amount);
+        paymentState.setState(state);
+        paymentState.setVersion(version);
+        paymentState.setModifiedTime(modifiedTime);
+        return paymentState;
+    }
+
+    public String getPaymentId() {
+        return paymentId;
+    }
+
+    public void setPaymentId(String paymentId) {
+        this.paymentId = paymentId;
     }
 
     public Long getAmount() {
@@ -52,19 +66,5 @@ public class TradeStateDto {
 
     public void setModifiedTime(LocalDateTime modifiedTime) {
         this.modifiedTime = modifiedTime;
-    }
-
-    public static TradeStateDto of(String tradeId, Integer state, Integer version, LocalDateTime modifiedTime) {
-        return TradeStateDto.of(tradeId, null, state, version, modifiedTime);
-    }
-
-    public static TradeStateDto of(String tradeId, Long amount, Integer state, Integer version, LocalDateTime modifiedTime) {
-        TradeStateDto tradeState = new TradeStateDto();
-        tradeState.setTradeId(tradeId);
-        tradeState.setAmount(amount);
-        tradeState.setState(state);
-        tradeState.setVersion(version);
-        tradeState.setModifiedTime(modifiedTime);
-        return tradeState;
     }
 }

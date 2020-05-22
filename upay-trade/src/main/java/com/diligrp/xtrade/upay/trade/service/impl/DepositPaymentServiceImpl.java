@@ -80,7 +80,7 @@ public class DepositPaymentServiceImpl implements IPaymentService {
         }
 
         TradeStateDto tradeState = TradeStateDto.of(trade.getTradeId(), TradeState.SUCCESS.getCode(),
-            now, trade.getVersion());
+                trade.getVersion(), now);
         int result = tradeOrderDao.compareAndSetState(tradeState);
         if (result == 0) {
             throw new TradePaymentException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统正忙，请稍后重试");

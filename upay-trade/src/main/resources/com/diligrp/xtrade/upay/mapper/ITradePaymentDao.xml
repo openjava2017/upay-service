@@ -30,4 +30,18 @@
     <select id="findTradePaymentById" parameterType="string" resultMap="TradePaymentMap">
         SELECT * FROM upay_trade_payment WHERE payment_id = #{paymentId}
     </select>
+
+    <update id="compareAndSetState" parameterType="com.diligrp.xtrade.upay.trade.domain.PaymentStateDto">
+        UPDATE upay_trade_payment SET version = version + 1
+        <if test="amount != null">
+            , amount = #{amount}
+        </if>
+        <if test="state != null">
+            , state = #{state}
+        </if>
+        <if test="modifiedTime != null">
+            , modified_time = #{modifiedTime}
+        </if>
+        WHERE payment_id = #{paymentId} AND version = #{version}
+    </update>
 </mapper>

@@ -60,6 +60,7 @@ public class WithdrawPaymentServiceImpl implements IPaymentService {
         // 处理个人提现
         LocalDateTime now = LocalDateTime.now();
         String paymentId = trade.getTradeId();
+        accountChannelService.checkTradePermission(payment.getAccountId(), payment.getPassword(), 5);
         AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId());
         IFundTransaction transaction = channel.openTransaction(trade.getType(), now);
         transaction.outgo(trade.getAmount(), FundType.FUND.getCode(), TradeType.getName(trade.getType()));
@@ -80,7 +81,7 @@ public class WithdrawPaymentServiceImpl implements IPaymentService {
         }
 
         TradeStateDto tradeState = TradeStateDto.of(trade.getTradeId(), TradeState.SUCCESS.getCode(),
-            now, trade.getVersion());
+                trade.getVersion(), now);
         int result = tradeOrderDao.compareAndSetState(tradeState);
         if (result == 0) {
             throw new TradePaymentException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统正忙，请稍后重试");

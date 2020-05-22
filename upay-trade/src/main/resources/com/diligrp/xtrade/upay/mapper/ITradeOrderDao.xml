@@ -35,10 +35,16 @@
     </select>
 
     <update id="compareAndSetState" parameterType="com.diligrp.xtrade.upay.trade.domain.TradeStateDto">
-        UPDATE
-          upay_trade_order
-        SET
-          state = #{state}, modified_time = #{modifiedTime}, version = version + 1
+        UPDATE upay_trade_order SET version = version + 1
+        <if test="amount != null">
+            , amount = #{amount}
+        </if>
+        <if test="state != null">
+            , state = #{state}
+        </if>
+        <if test="modifiedTime != null">
+            , modified_time = #{modifiedTime}
+        </if>
         WHERE
           trade_id = #{tradeId} AND version = #{version}
     </update>

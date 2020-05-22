@@ -11,6 +11,8 @@ public class PaymentRequest {
     private Long accountId;
     // 支付渠道
     private Integer channelId;
+    // 支付密码
+    private String password;
     // 银行卡号-用于银行渠道进行圈存圈提
     private String cardNo;
     // 费用列表
@@ -38,6 +40,14 @@ public class PaymentRequest {
 
     public void setChannelId(Integer channelId) {
         this.channelId = channelId;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getCardNo() {

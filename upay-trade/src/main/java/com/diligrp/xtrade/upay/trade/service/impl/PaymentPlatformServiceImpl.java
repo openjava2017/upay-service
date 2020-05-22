@@ -85,7 +85,8 @@ public class PaymentPlatformServiceImpl implements IPaymentPlatformService, Bean
         feeList.stream().map(fee -> FundType.getFee(fee.getType())).forEach(feeOpt ->
             feeOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "不支持的费用类型")));
 
-        Payment payment = Payment.of(request.getTradeId(), request.getAccountId(), tradeOrder.getAmount(), request.getChannelId());
+        Payment payment = Payment.of(request.getTradeId(), request.getAccountId(), tradeOrder.getAmount(),
+                request.getChannelId(), request.getPassword());
         payment.put(Merchant.class.getName(), application.getMerchant());
         payment.put(Fee.class.getName(), feeList);
 

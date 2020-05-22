@@ -15,7 +15,9 @@ public enum AccountState implements IEnumType {
 
     NORMAL("正常", 1),
 
-    VOID("注销", 2);
+    LOCKED("锁定", 2),
+
+    VOID("注销", 3);
 
     private String name;
     private int code;
