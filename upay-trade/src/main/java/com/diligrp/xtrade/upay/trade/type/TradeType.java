@@ -19,7 +19,7 @@ public enum TradeType implements IEnumType {
 
     DIRECT_TRADE("即时交易", 20),
 
-    VOUCH_TRADE("担保交易", 21),
+    FEE("缴费", 21),
 
     PRE_TRADE("预付交易", 22),
 

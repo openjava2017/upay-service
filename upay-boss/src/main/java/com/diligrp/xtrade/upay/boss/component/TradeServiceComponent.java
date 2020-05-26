@@ -2,7 +2,6 @@ package com.diligrp.xtrade.upay.boss.component;
 
 import com.diligrp.xtrade.shared.domain.ServiceRequest;
 import com.diligrp.xtrade.shared.sapi.CallableComponent;
-import com.diligrp.xtrade.shared.security.PasswordUtils;
 import com.diligrp.xtrade.shared.util.AssertUtils;
 import com.diligrp.xtrade.upay.boss.domain.PaymentId;
 import com.diligrp.xtrade.upay.boss.domain.TradeId;
@@ -12,6 +11,7 @@ import com.diligrp.xtrade.upay.trade.domain.PreTradeDto;
 import com.diligrp.xtrade.upay.trade.domain.TradeRequest;
 import com.diligrp.xtrade.upay.trade.service.IPaymentPlatformService;
 import com.diligrp.xtrade.upay.trade.service.IPreTradePaymentService;
+import com.diligrp.xtrade.upay.trade.type.TradeType;
 
 import javax.annotation.Resource;
 
@@ -34,7 +34,12 @@ public class TradeServiceComponent {
         AssertUtils.notNull(trade.getType(), "type missed");
         AssertUtils.notNull(trade.getAccountId(), "accountId missed");
         AssertUtils.notNull(trade.getAmount(), "amount missed");
-        AssertUtils.isTrue(trade.getAmount() > 0, "Invalid amount");
+        // 缴费业务amount=0，否则amount>0
+        if (trade.getType() == TradeType.FEE.getCode()) {
+            AssertUtils.isTrue(trade.getAmount() == 0, "Invalid amount");
+        } else {
+            AssertUtils.isTrue(trade.getAmount() > 0, "Invalid amount");
+        }
 
         Application application = request.getContext().getObject(Application.class.getName(), Application.class);
         String tradeId = paymentPlatformService.createTrade(application, trade);
@@ -88,9 +93,5 @@ public class TradeServiceComponent {
         AssertUtils.notEmpty(paymentId.getPaymentId(), "paymentId missed");
 
         preTradePaymentService.cancel(paymentId.getPaymentId());
-    }
-
-    public static void main(String[] args) {
-        System.out.println(PasswordUtils.encrypt("abcd1234", "F2DFF7F34007E55CA83D9CE01FDF7447"));
     }
 }
