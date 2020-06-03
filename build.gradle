@@ -34,6 +34,6 @@ subprojects {
     dependencies {
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.1.2'
-        implementation fileTree(dir: '$rootProject.projectDir/libs', includes: ['*jar'])
+        implementation fileTree(dir: "$rootProject.projectDir/libs", includes: ['*jar'])
     }
 }
