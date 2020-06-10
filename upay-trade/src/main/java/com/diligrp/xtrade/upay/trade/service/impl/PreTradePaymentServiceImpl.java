@@ -83,7 +83,8 @@ public class PreTradePaymentServiceImpl implements IPreTradePaymentService {
                 .version(0).createdTime(now).build();
         frozenOrderDao.insertFrozenOrder(frozenOrder);
 
-        TradeStateDto tradeState = TradeStateDto.of(trade.getTradeId(), TradeState.PROCESSING.getCode(),
+        //冻结交易订单
+        TradeStateDto tradeState = TradeStateDto.of(trade.getTradeId(), TradeState.FROZEN.getCode(),
                 trade.getVersion(), now);
         int result = tradeOrderDao.compareAndSetState(tradeState);
         if (result == 0) {
@@ -109,7 +110,7 @@ public class PreTradePaymentServiceImpl implements IPreTradePaymentService {
         if (trade.getType() != TradeType.PRE_TRADE.getCode()) {
             throw new TradePaymentException(ErrorCode.OPERATION_NOT_ALLOWED, "该交易不允许此类操作");
         }
-        if (trade.getState() != TradeState.PROCESSING.getCode()) {
+        if (trade.getState() != TradeState.FROZEN.getCode()) {
             throw new TradePaymentException(ErrorCode.OPERATION_NOT_ALLOWED, "无效的交易状态");
         }
         if (request.getAmount() > trade.getAmount()) {
@@ -157,7 +158,7 @@ public class PreTradePaymentServiceImpl implements IPreTradePaymentService {
         if (trade.getType() != TradeType.PRE_TRADE.getCode()) {
             throw new TradePaymentException(ErrorCode.OPERATION_NOT_ALLOWED, "该交易不允许此类操作");
         }
-        if (trade.getState() != TradeState.PROCESSING.getCode()) {
+        if (trade.getState() != TradeState.FROZEN.getCode()) {
             throw new TradePaymentException(ErrorCode.OPERATION_NOT_ALLOWED, "无效的交易状态");
         }
 

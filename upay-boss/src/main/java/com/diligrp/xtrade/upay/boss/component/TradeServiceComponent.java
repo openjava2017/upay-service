@@ -59,6 +59,8 @@ public class TradeServiceComponent {
         AssertUtils.notNull(payment.getChannelId(), "channelId missed");
         // 费用参数校验
         payment.fees().ifPresent(fees -> fees.stream().forEach(fee -> {
+            AssertUtils.notNull(fee.getType(), "fee type missed");
+            AssertUtils.notNull(fee.getTypeName(), "fee name missed");
             AssertUtils.notNull(fee.getAmount(), "fee amount missed");
             AssertUtils.isTrue(fee.getAmount() > 0, "Invalid fee amount");
         }));
