@@ -92,8 +92,8 @@ public class PreTradePaymentServiceImpl implements IPreTradePaymentService {
 
         TradePayment paymentDo = TradePayment.builder().paymentId(paymentId).tradeId(trade.getTradeId())
                 .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
-                .amount(payment.getAmount()).fee(0L).state(PaymentState.PROCESSING.getCode()).description(null)
-                .version(0).createdTime(now).build();
+                .amount(payment.getAmount()).fee(0L).state(PaymentState.PROCESSING.getCode())
+                .description(TradeType.PRE_TRADE.getName()).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
 
         return PaymentResult.of(paymentId, TradeState.SUCCESS.getCode());

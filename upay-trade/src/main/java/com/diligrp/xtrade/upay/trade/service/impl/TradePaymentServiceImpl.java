@@ -62,15 +62,15 @@ public class TradePaymentServiceImpl implements IPaymentService {
         accountChannelService.checkTradePermission(payment.getAccountId(), payment.getPassword(), 5);
         AccountChannel fromChannel = AccountChannel.of(paymentId, payment.getAccountId());
         IFundTransaction fromTransaction = fromChannel.openTransaction(trade.getType(), now);
-        fromTransaction.outgo(trade.getAmount(), FundType.FUND.getCode(), TradeType.getName(trade.getType()));
+        fromTransaction.outgo(trade.getAmount(), FundType.FUND.getCode(), FundType.FUND.getName());
         accountChannelService.submit(fromTransaction);
 
         // 处理卖家收款
         AccountChannel toChannel = AccountChannel.of(paymentId, trade.getAccountId());
         IFundTransaction toTransaction = toChannel.openTransaction(trade.getType(), now);
-        toTransaction.income(trade.getAmount(), FundType.FUND.getCode(), TradeType.getName(trade.getType()));
+        toTransaction.income(trade.getAmount(), FundType.FUND.getCode(), FundType.FUND.getName());
         fees.forEach(fee -> {
-            toTransaction.outgo(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()));
+            toTransaction.outgo(fee.getAmount(), fee.getType(), fee.getTypeName());
         });
         accountChannelService.submit(toTransaction);
 
@@ -80,7 +80,7 @@ public class TradePaymentServiceImpl implements IPaymentService {
             AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount());
             IFundTransaction merTransaction = merChannel.openTransaction(trade.getType(), now);
             fees.forEach(fee ->
-                merTransaction.income(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()))
+                merTransaction.income(fee.getAmount(), fee.getType(), fee.getTypeName())
             );
             accountChannelService.submit(merTransaction);
         }
@@ -95,8 +95,8 @@ public class TradePaymentServiceImpl implements IPaymentService {
         long totalFees = fees.stream().mapToLong(Fee::getAmount).sum();
         TradePayment paymentDo = TradePayment.builder().paymentId(paymentId).tradeId(trade.getTradeId())
             .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
-            .amount(payment.getAmount()).fee(totalFees).state(PaymentState.SUCCESS.getCode()).description(null)
-            .version(0).createdTime(now).build();
+            .amount(payment.getAmount()).fee(totalFees).state(PaymentState.SUCCESS.getCode())
+            .description(TradeType.DIRECT_TRADE.getName()).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
         if (!fees.isEmpty()) {
             List<PaymentFee> paymentFeeDos = fees.stream().map(fee ->

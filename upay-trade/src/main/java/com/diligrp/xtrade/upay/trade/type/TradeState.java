@@ -17,11 +17,15 @@ public enum TradeState implements IEnumType {
 
     PROCESSING("处理中", 2),
 
-    SUCCESS("成功", 3),
+    SUCCESS("交易成功", 3),
 
-    CANCELED("取消", 4),
+    FROZEN("交易冻结", 4),
 
-    CLOSED("关闭", 5);
+    REFUND("交易退款", 5),
+
+    CANCELED("交易取消", 6),
+
+    CLOSED("交易关闭", 7);
 
     private String name;
     private int code;

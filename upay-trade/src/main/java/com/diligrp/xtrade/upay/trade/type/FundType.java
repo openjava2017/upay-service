@@ -13,7 +13,7 @@ import java.util.stream.Stream;
  */
 public enum FundType implements IEnumType {
 
-    FUND("资金", 1),
+    FUND("账户资金", 1),
 
     POUNDAGE("手续费", 2),
 

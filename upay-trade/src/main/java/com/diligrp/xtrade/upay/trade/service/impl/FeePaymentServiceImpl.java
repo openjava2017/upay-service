@@ -14,7 +14,6 @@ import com.diligrp.xtrade.upay.trade.model.PaymentFee;
 import com.diligrp.xtrade.upay.trade.model.TradeOrder;
 import com.diligrp.xtrade.upay.trade.model.TradePayment;
 import com.diligrp.xtrade.upay.trade.service.IPaymentService;
-import com.diligrp.xtrade.upay.trade.type.FundType;
 import com.diligrp.xtrade.upay.trade.type.PaymentState;
 import com.diligrp.xtrade.upay.trade.type.TradeState;
 import com.diligrp.xtrade.upay.trade.type.TradeType;
@@ -67,7 +66,7 @@ public class FeePaymentServiceImpl implements IPaymentService {
             AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId());
             IFundTransaction transaction = channel.openTransaction(trade.getType(), now);
             fees.forEach(fee ->
-                transaction.outgo(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()))
+                transaction.outgo(fee.getAmount(), fee.getType(), fee.getTypeName())
             );
             accountChannelService.submit(transaction);
         }
@@ -75,7 +74,7 @@ public class FeePaymentServiceImpl implements IPaymentService {
         AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount());
         IFundTransaction feeTransaction = merChannel.openTransaction(trade.getType(), now);
         fees.forEach(fee ->
-            feeTransaction.income(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()))
+            feeTransaction.income(fee.getAmount(), fee.getType(), fee.getTypeName())
         );
         accountChannelService.submit(feeTransaction);
 
@@ -87,9 +86,9 @@ public class FeePaymentServiceImpl implements IPaymentService {
         }
         long totalFee = fees.stream().mapToLong(Fee::getAmount).sum();
         TradePayment paymentDo = TradePayment.builder().paymentId(paymentId).tradeId(trade.getTradeId())
-                .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
-                .amount(trade.getAmount()).fee(totalFee).state(PaymentState.SUCCESS.getCode()).description(null)
-                .version(0).createdTime(now).build();
+            .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
+            .amount(trade.getAmount()).fee(totalFee).state(PaymentState.SUCCESS.getCode())
+            .description(TradeType.FEE.getName()).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
         List<PaymentFee> paymentFeeDos = fees.stream().map(fee ->
             PaymentFee.of(paymentId, fee.getAmount(), fee.getType(), now)

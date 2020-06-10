@@ -74,10 +74,10 @@ public class DefaultFundStreamEngine implements IFundStreamEngine {
         List<FundStatement> statements = Arrays.stream(transaction.getActivities())
             .filter(activity -> activity.getAmount() != 0)
             .map(activity -> FundStatement.builder().paymentId(transaction.getPaymentId())
-                .accountId(transaction.getAccountId()).childId(0L)
-                .action(ActionType.getByAmount(activity.getAmount()).getCode()).type(transaction.getType())
+                .accountId(transaction.getAccountId()).childId(0L).tradeType(transaction.getType())
+                .action(ActionType.getByAmount(activity.getAmount()).getCode())
                 .balance(balance.getAndAdd(activity.getAmount())).amount(activity.getAmount())
-                .fundType(activity.getType()).description(activity.getTypeName())
+                .type(activity.getType()).typeName(activity.getTypeName()).description(null)
                 .createdTime(transaction.getWhen()).build())
             .collect(Collectors.toList());
         fundStatementDao.insertFundStatements(statements);
@@ -110,10 +110,10 @@ public class DefaultFundStreamEngine implements IFundStreamEngine {
         List<FundStatement> statements = Arrays.stream(transaction.getActivities())
             .filter(activity -> activity.getAmount() != 0)
             .map(activity -> FundStatement.builder().paymentId(transaction.getPaymentId())
-                .accountId(transaction.getAccountId()).childId(0L)
-                .action(ActionType.getByAmount(activity.getAmount()).getCode()).type(transaction.getType())
+                .accountId(transaction.getAccountId()).childId(0L).tradeType(transaction.getType())
+                .action(ActionType.getByAmount(activity.getAmount()).getCode())
                 .balance(balance.getAndAdd(activity.getAmount())).amount(activity.getAmount())
-                .fundType(activity.getType()).description(activity.getTypeName())
+                .type(activity.getType()).typeName(activity.getTypeName()).description(null)
                 .createdTime(transaction.getWhen()).build())
             .collect(Collectors.toList());
         fundStatementDao.insertFundStatements(statements);

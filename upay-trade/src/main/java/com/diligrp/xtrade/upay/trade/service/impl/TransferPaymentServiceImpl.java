@@ -47,13 +47,13 @@ public class TransferPaymentServiceImpl implements IPaymentService {
         accountChannelService.checkTradePermission(payment.getAccountId(), payment.getPassword(), 5);
         AccountChannel fromChannel = AccountChannel.of(paymentId, payment.getAccountId());
         IFundTransaction fromTransaction = fromChannel.openTransaction(trade.getType(), now);
-        fromTransaction.outgo(trade.getAmount(), FundType.FUND.getCode(), TradeType.getName(trade.getType()));
+        fromTransaction.outgo(trade.getAmount(), FundType.FUND.getCode(), FundType.FUND.getName());
         accountChannelService.submit(fromTransaction);
 
         // 处理卖家收款
         AccountChannel toChannel = AccountChannel.of(paymentId, trade.getAccountId());
         IFundTransaction toTransaction = toChannel.openTransaction(trade.getType(), now);
-        toTransaction.income(trade.getAmount(), FundType.FUND.getCode(), TradeType.getName(trade.getType()));
+        toTransaction.income(trade.getAmount(), FundType.FUND.getCode(), FundType.FUND.getName());
         accountChannelService.submit(toTransaction);
 
         TradeStateDto tradeState = TradeStateDto.of(trade.getTradeId(), TradeState.SUCCESS.getCode(),
@@ -65,8 +65,8 @@ public class TransferPaymentServiceImpl implements IPaymentService {
 
         TradePayment paymentDo = TradePayment.builder().paymentId(paymentId).tradeId(trade.getTradeId())
                 .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
-                .amount(payment.getAmount()).fee(0L).state(PaymentState.SUCCESS.getCode()).description(null)
-                .version(0).createdTime(now).build();
+                .amount(payment.getAmount()).fee(0L).state(PaymentState.SUCCESS.getCode())
+                .description(TradeType.TRANSFER.getName()).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
 
         return PaymentResult.of(paymentId, TradeState.SUCCESS.getCode());

@@ -8,11 +8,12 @@
         <result column="payment_id" property="paymentId"/>
         <result column="account_id" property="accountId"/>
         <result column="child_id" property="childId"/>
+        <result column="trade_type" property="tradeType"/>
         <result column="action" property="action"/>
-        <result column="type" property="type"/>
         <result column="balance" property="balance"/>
         <result column="amount" property="amount"/>
-        <result column="fund_type" property="fundType"/>
+        <result column="type" property="type"/>
+        <result column="type_name" property="typeName"/>
         <result column="description" property="description"/>
         <result column="created_time" property="createdTime"/>
     </resultMap>

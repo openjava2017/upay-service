@@ -62,9 +62,9 @@ public class DepositPaymentServiceImpl implements IPaymentService {
         LocalDateTime now = LocalDateTime.now();
         AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId());
         IFundTransaction transaction = channel.openTransaction(trade.getType(), now);
-        transaction.income(trade.getAmount(), FundType.FUND.getCode(), typeName(payment.getChannelId()));
+        transaction.income(trade.getAmount(), FundType.FUND.getCode(), FundType.FUND.getName());
         fees.forEach(fee -> {
-            transaction.outgo(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()));
+            transaction.outgo(fee.getAmount(), fee.getType(), fee.getTypeName());
         });
         AccountFund fund = accountChannelService.submit(transaction);
 
@@ -74,7 +74,7 @@ public class DepositPaymentServiceImpl implements IPaymentService {
             AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount());
             IFundTransaction feeTransaction = merChannel.openTransaction(trade.getType(), now);
             fees.forEach(fee ->
-                feeTransaction.income(fee.getAmount(), fee.getType(), FundType.getName(fee.getType()))
+                feeTransaction.income(fee.getAmount(), fee.getType(), fee.getTypeName())
             );
             accountChannelService.submit(feeTransaction);
         }
@@ -87,9 +87,9 @@ public class DepositPaymentServiceImpl implements IPaymentService {
         }
         long totalFee = fees.stream().mapToLong(Fee::getAmount).sum();
         TradePayment paymentDo = TradePayment.builder().paymentId(paymentId).tradeId(trade.getTradeId())
-                .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
-                .amount(payment.getAmount()).fee(totalFee).state(PaymentState.SUCCESS.getCode()).description(null)
-                .version(0).createdTime(now).build();
+            .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
+            .amount(payment.getAmount()).fee(totalFee).state(PaymentState.SUCCESS.getCode())
+            .description(tradeName(payment.getChannelId())).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
         if (!fees.isEmpty()) {
             List<PaymentFee> paymentFeeDos = fees.stream().map(fee ->
@@ -101,7 +101,7 @@ public class DepositPaymentServiceImpl implements IPaymentService {
         return PaymentResult.of(paymentId, TradeState.SUCCESS.getCode(), fund);
     }
 
-    private String typeName(int channelType) {
+    private String tradeName(int channelType) {
         if (channelType == ChannelType.CASH.getCode()) {
             return "现金充值";
         } else if (channelType == ChannelType.POS.getCode()) {

@@ -4,6 +4,9 @@ import com.diligrp.xtrade.shared.domain.BaseDo;
 
 import java.time.LocalDateTime;
 
+/**
+ * 资金收支明细数据模型
+ */
 public class FundStatement extends BaseDo {
     // 支付ID
     private String paymentId;
@@ -11,16 +14,18 @@ public class FundStatement extends BaseDo {
     private Long accountId;
     // 子账号ID
     private Long childId;
+    // 交易类型
+    private Integer tradeType;
     // 动作-收入 支出
     private Integer action;
-    // 交易类型
-    private Integer type;
     // 期初余额-分
     private Long balance;
     // 金额-分(正值 负值)
     private Long amount;
     // 资金类型
-    private Integer fundType;
+    private Integer type;
+    // 类型名称
+    private String typeName;
     // 备注
     private String description;
 
@@ -48,20 +53,20 @@ public class FundStatement extends BaseDo {
         this.childId = childId;
     }
 
+    public Integer getTradeType() {
+        return tradeType;
+    }
+
+    public void setTradeType(Integer tradeType) {
+        this.tradeType = tradeType;
+    }
+
     public Integer getAction() {
         return action;
     }
 
     public void setAction(Integer action) {
         this.action = action;
-    }
-
-    public Integer getType() {
-        return type;
-    }
-
-    public void setType(Integer type) {
-        this.type = type;
     }
 
     public Long getBalance() {
@@ -80,12 +85,20 @@ public class FundStatement extends BaseDo {
         this.amount = amount;
     }
 
-    public Integer getFundType() {
-        return fundType;
+    public Integer getType() {
+        return type;
     }
 
-    public void setFundType(Integer fundType) {
-        this.fundType = fundType;
+    public void setType(Integer type) {
+        this.type = type;
+    }
+
+    public String getTypeName() {
+        return typeName;
+    }
+
+    public void setTypeName(String typeName) {
+        this.typeName = typeName;
     }
 
     public String getDescription() {
@@ -116,13 +129,13 @@ public class FundStatement extends BaseDo {
             return this;
         }
 
-        public Builder action(Integer action) {
-            FundStatement.this.action = action;
+        public Builder tradeType(Integer tradeType) {
+            FundStatement.this.tradeType = tradeType;
             return this;
         }
 
-        public Builder type(Integer type) {
-            FundStatement.this.type = type;
+        public Builder action(Integer action) {
+            FundStatement.this.action = action;
             return this;
         }
 
@@ -136,8 +149,13 @@ public class FundStatement extends BaseDo {
             return this;
         }
 
-        public Builder fundType(Integer fundType) {
-            FundStatement.this.fundType = fundType;
+        public Builder type(Integer type) {
+            FundStatement.this.type = type;
+            return this;
+        }
+
+        public Builder typeName(String typeName) {
+            FundStatement.this.typeName = typeName;
             return this;
         }
 

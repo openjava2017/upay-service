@@ -29,8 +29,8 @@ public class AccountChannel {
         return accountId;
     }
 
-    public IFundTransaction openTransaction(int type, LocalDateTime when) {
-        return new ChannelFundTransaction(type, when);
+    public IFundTransaction openTransaction(int tradeType, LocalDateTime when) {
+        return new ChannelFundTransaction(tradeType, when);
     }
 
     public static AccountChannel of(String paymentId, long accountId) {
@@ -39,7 +39,7 @@ public class AccountChannel {
 
     public class ChannelFundTransaction implements IFundTransaction {
         // 业务类型 - 资金冻结时不使用
-        private int type;
+        private int tradeType;
         // 冻结金额 - 正数时为资金冻结, 负数时为资金解冻
         private long frozenAmount = 0;
         // 资金流
@@ -47,8 +47,8 @@ public class AccountChannel {
         // 发生时间
         private LocalDateTime when;
 
-        public ChannelFundTransaction(int type, LocalDateTime when) {
-            this.type = type;
+        public ChannelFundTransaction(int tradeType, LocalDateTime when) {
+            this.tradeType = tradeType;
             this.when = when;
         }
 
@@ -84,7 +84,7 @@ public class AccountChannel {
             AssertUtils.notEmpty(paymentId, "paymentId missed");
 
             FundActivity[] fundActivities = funds.toArray(new FundActivity[funds.size()]);
-            return Optional.of(FundTransaction.of(paymentId, accountId, type, fundActivities, when));
+            return Optional.of(FundTransaction.of(paymentId, accountId, tradeType, fundActivities, when));
         }
 
         @Override

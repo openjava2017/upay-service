@@ -126,15 +126,16 @@ CREATE TABLE `upay_fund_statement` (
   `payment_id` VARCHAR(40) NOT NULL COMMENT '支付ID',
   `account_id` BIGINT NOT NULL COMMENT '账号ID',
   `child_id` BIGINT COMMENT '子账号ID',
+  `trade_type` TINYINT UNSIGNED NOT NULL COMMENT '交易类型',
   `action` TINYINT UNSIGNED NOT NULL COMMENT '动作-收入 支出',
-  `type` TINYINT UNSIGNED NOT NULL COMMENT '交易类型',
   `balance` BIGINT NOT NULL COMMENT '(前)余额-分',
   `amount` BIGINT NOT NULL COMMENT '金额-分(正值 负值)',
-  `fund_type` TINYINT UNSIGNED NOT NULL COMMENT '资金类型',
+  `type` TINYINT UNSIGNED NOT NULL COMMENT '资金类型',
+  `type_name` VARCHAR(80) COMMENT '费用描述',
   `description` VARCHAR(128) COMMENT '备注',
   `created_time` DATETIME COMMENT '创建时间',
   PRIMARY KEY (`id`),
-  KEY `udx_fund_stmt_paymentId` (`payment_id`) USING BTREE,
+  KEY `idx_fund_stmt_paymentId` (`payment_id`) USING BTREE,
   KEY `idx_fund_stmt_accountId` (`account_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
