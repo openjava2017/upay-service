@@ -27,11 +27,13 @@ CREATE TABLE `upay_merchant` (
   `name` VARCHAR(80) NOT NULL COMMENT '商户名称',
   `profit_account` BIGINT NOT NULL COMMENT '收益账户',
   `vouch_account` BIGINT NOT NULL COMMENT '担保账户',
-  `return_account` BIGINT NOT NULL COMMENT '押金账户',
+  `pledge_account` BIGINT NOT NULL COMMENT '押金账户',
   `address` VARCHAR(128) COMMENT '商户地址',
   `contact` VARCHAR(50) COMMENT '联系人',
   `mobile` VARCHAR(20) COMMENT '手机号',
   `state` TINYINT UNSIGNED NOT NULL COMMENT '商户状态',
+  `created_time` DATETIME COMMENT '创建时间',
+  `modified_time` DATETIME COMMENT '修改时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_merchant_mchId` (`mch_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -48,6 +50,8 @@ CREATE TABLE `upay_application` (
   `name` VARCHAR(80) NOT NULL COMMENT '应用名称',
   `access_token` VARCHAR(40) COMMENT '授权Token',
   `secret_key` VARCHAR(250) COMMENT '安全密钥-接口使用',
+  `created_time` DATETIME COMMENT '创建时间',
+  `modified_time` DATETIME COMMENT '修改时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_application_appId` (`app_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -55,7 +59,8 @@ CREATE TABLE `upay_application` (
 -- --------------------------------------------------------------------
 -- 资金账户表
 -- 说明：账号类型分为个人、企业和商户，个人账户和企业账户针对于市场客户；
--- 商户账户为市场特殊账户（收益资金账户、归集资金账户和押金资金账户等）；
+-- 个人、企业账户业务用途有交易账户，缴费账户，预存款账户；
+-- 商户账户为市场特殊账户，业务用途包括：收益资金账户、担保资金账户和押金资金账户等；
 -- 资金账号分主资金账号和子资金账号，通过parent_id标识，子资金账号无账户资金记录；
 -- parent_id=0为主账号，且登录账号记录资金账号所属的园区卡号。
 -- --------------------------------------------------------------------
@@ -66,8 +71,9 @@ CREATE TABLE `upay_fund_account` (
   `account_id` BIGINT NOT NULL COMMENT '账号ID',
   `parent_id` BIGINT NOT NULL COMMENT '父账号ID',
   `type` TINYINT UNSIGNED NOT NULL COMMENT '账号类型',
+  `use_for` TINYINT UNSIGNED NOT NULL COMMENT '业务用途',
   `code` VARCHAR(20) COMMENT '登录账号',
-  `name` VARCHAR(20) NOT NULL COMMENT '用户名',
+  `name` VARCHAR(40) NOT NULL COMMENT '用户名',
   `gender` TINYINT UNSIGNED COMMENT '性别',
   `mobile` VARCHAR(20) NOT NULL COMMENT '手机号',
   `email` VARCHAR(40) COMMENT '邮箱地址',
@@ -205,29 +211,14 @@ CREATE TABLE `upay_trade_payment` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------------------
--- 交易费用表
--- 说明：交易费用表存储收款方收取的费用明细，需记录在资金流水表中
--- --------------------------------------------------------------------
-DROP TABLE IF EXISTS `upay_trade_fee`;
-CREATE TABLE `upay_trade_fee` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `trade_id` VARCHAR(40) NOT NULL COMMENT '交易ID',
-  `amount` BIGINT NOT NULL COMMENT '金额-分',
-  `type` TINYINT UNSIGNED NOT NULL COMMENT '费用类型',
-  `type_name` VARCHAR(80) COMMENT '费用描述',
-  `created_time` DATETIME COMMENT '创建时间',
-  PRIMARY KEY (`id`),
-  KEY `idx_trade_fee_tradeId` (`trade_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------------------
 -- 支付费用表
--- 说明：支付费用表存储付款方收取的费用明细，需记录在资金流水表中
+-- 说明：支付费用表存储交易收取的费用明细，需记录在资金流水表中
 -- --------------------------------------------------------------------
 DROP TABLE IF EXISTS `upay_payment_fee`;
 CREATE TABLE `upay_payment_fee` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `payment_id` VARCHAR(40) NOT NULL COMMENT '支付ID',
+  `use_for` TINYINT UNSIGNED COMMENT '费用用途',
   `amount` BIGINT NOT NULL COMMENT '金额-分',
   `type` TINYINT UNSIGNED NOT NULL COMMENT '费用类型',
   `type_name` VARCHAR(80) COMMENT '费用描述',

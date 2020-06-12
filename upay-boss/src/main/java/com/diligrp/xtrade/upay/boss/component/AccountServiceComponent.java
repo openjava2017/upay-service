@@ -6,7 +6,7 @@ import com.diligrp.xtrade.shared.util.AssertUtils;
 import com.diligrp.xtrade.upay.boss.domain.AccountId;
 import com.diligrp.xtrade.upay.core.domain.RegisterAccount;
 import com.diligrp.xtrade.upay.core.service.IFundAccountService;
-import com.diligrp.xtrade.upay.trade.domain.Application;
+import com.diligrp.xtrade.upay.trade.domain.ApplicationPermit;
 
 import javax.annotation.Resource;
 
@@ -20,11 +20,12 @@ public class AccountServiceComponent {
         // 进行入参校验
         AssertUtils.notNull(account.getCustomerId(), "customerId missed");
         AssertUtils.notNull(account.getType(), "type missed");
+        AssertUtils.notNull(account.getUseFor(), "useFor missed");
         AssertUtils.notNull(account.getName(), "name missed");
         AssertUtils.notNull(account.getMobile(), "mobile missed");
         AssertUtils.notNull(account.getPassword(), "password missed");
 
-        Application application = request.getContext().getObject(Application.class.getName(), Application.class);
+        ApplicationPermit application = request.getContext().getObject(ApplicationPermit.class.getName(), ApplicationPermit.class);
         long accountId = fundAccountService.createFundAccount(application.getMerchant().getMchId(), account);
         return AccountId.of(accountId);
     }

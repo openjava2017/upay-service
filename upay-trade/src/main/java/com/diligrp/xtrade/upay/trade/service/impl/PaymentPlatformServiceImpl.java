@@ -17,7 +17,6 @@ import com.diligrp.xtrade.upay.trade.exception.TradePaymentException;
 import com.diligrp.xtrade.upay.trade.model.TradeOrder;
 import com.diligrp.xtrade.upay.trade.service.IPaymentPlatformService;
 import com.diligrp.xtrade.upay.trade.service.IPaymentService;
-import com.diligrp.xtrade.upay.trade.type.FundType;
 import com.diligrp.xtrade.upay.trade.type.TradeState;
 import com.diligrp.xtrade.upay.trade.type.TradeType;
 import com.diligrp.xtrade.upay.trade.util.TypeDatedIdStrategy;
@@ -47,7 +46,7 @@ public class PaymentPlatformServiceImpl implements IPaymentPlatformService, Bean
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-    public String createTrade(Application application, TradeRequest trade) {
+    public String createTrade(ApplicationPermit application, TradeRequest trade) {
         LocalDateTime when = LocalDateTime.now();
         Optional<TradeType> tradeType = TradeType.getType(trade.getType());
         tradeType.orElseThrow(() -> new TradePaymentException(ErrorCode.TRADE_NOT_SUPPORTED, "不支持的交易类型"));
@@ -56,7 +55,7 @@ public class PaymentPlatformServiceImpl implements IPaymentPlatformService, Bean
 
         ISerialKeyGenerator keyGenerator = keyGeneratorManager.getSerialKeyGenerator(SequenceKey.TRADE_ID);
         String tradeId = keyGenerator.nextSerialNo(new TypeDatedIdStrategy(trade.getType()));
-        TradeOrder tradeOrder = TradeOrder.builder().mchId(application.getMchId()).appId(application.getAppId())
+        TradeOrder tradeOrder = TradeOrder.builder().mchId(application.getMerchant().getMchId()).appId(application.getAppId())
             .tradeId(tradeId).type(trade.getType()).serialNo(trade.getSerialNo()).cycleNo(trade.getCycleNo())
             .accountId(account.getAccountId()).name(account.getName()).amount(trade.getAmount())
             .maxAmount(trade.getAmount()).fee(0L).state(TradeState.PENDING.getCode())
@@ -66,7 +65,7 @@ public class PaymentPlatformServiceImpl implements IPaymentPlatformService, Bean
     }
 
     @Override
-    public String commit(Application application, PaymentRequest request) {
+    public String commit(ApplicationPermit application, PaymentRequest request) {
         Optional<ChannelType> channelType = ChannelType.getType(request.getChannelId());
         channelType.orElseThrow(() -> new TradePaymentException(ErrorCode.CHANNEL_NOT_SUPPORTED, "不支持的支付渠道"));
 
@@ -80,15 +79,15 @@ public class PaymentPlatformServiceImpl implements IPaymentPlatformService, Bean
         Optional<IPaymentService> tradeServiceOpt = tradeService(tradeType);
         IPaymentService service = tradeServiceOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.TRADE_NOT_SUPPORTED, "不支持的交易类型"));
 
-        // 检查是否是系统支持的费用类型，然后计算总费用
-        List<Fee> feeList = request.fees().orElseGet(Collections::emptyList);
-        feeList.stream().map(fee -> FundType.getFee(fee.getType())).forEach(feeOpt ->
-            feeOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "不支持的费用类型")));
+        // 检查是否是系统支持的费用类型 - 支付系统只负责记录费用类型，暂不校验费用类型，原因是业务系统费用过多且可动态配置
+//        List<Fee> feeList = request.fees().orElseGet(Collections::emptyList);
+//        feeList.stream().map(fee -> FundType.getFee(fee.getType())).forEach(feeOpt ->
+//            feeOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "不支持的费用类型")));
 
         Payment payment = Payment.of(request.getTradeId(), request.getAccountId(), tradeOrder.getAmount(),
-                request.getChannelId(), request.getPassword());
-        payment.put(Merchant.class.getName(), application.getMerchant());
-        payment.put(Fee.class.getName(), feeList);
+            request.getChannelId(), request.getPassword());
+        payment.put(MerchantPermit.class.getName(), application.getMerchant());
+        request.fees().ifPresent(fees -> payment.put(Fee.class.getName(), fees));
 
         PaymentResult state = service.commit(tradeOrder, payment);
         return state.getPaymentId();

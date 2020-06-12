@@ -1,6 +1,6 @@
 package com.diligrp.xtrade.upay.trade.domain;
 
-public class PreTradeDto {
+public class FrozenTradeDto {
     // 支付ID
     private String paymentId;
     // 实际支付金额

@@ -7,6 +7,8 @@ public class TradeStateDto {
     private String tradeId;
     // 金额 - 预支付交易或发生退款时需要更新实际付款金额
     private Long amount;
+    // 费用
+    private Long fee;
     // 状态
     private Integer state;
     // 数据版本
@@ -28,6 +30,14 @@ public class TradeStateDto {
 
     public void setAmount(Long amount) {
         this.amount = amount;
+    }
+
+    public Long getFee() {
+        return fee;
+    }
+
+    public void setFee(Long fee) {
+        this.fee = fee;
     }
 
     public Integer getState() {
@@ -59,9 +69,14 @@ public class TradeStateDto {
     }
 
     public static TradeStateDto of(String tradeId, Long amount, Integer state, Integer version, LocalDateTime modifiedTime) {
+        return TradeStateDto.of(tradeId, amount, null, state, version, modifiedTime);
+    }
+
+    public static TradeStateDto of(String tradeId, Long amount, Long fee, Integer state, Integer version, LocalDateTime modifiedTime) {
         TradeStateDto tradeState = new TradeStateDto();
         tradeState.setTradeId(tradeId);
         tradeState.setAmount(amount);
+        tradeState.setFee(fee);
         tradeState.setState(state);
         tradeState.setVersion(version);
         tradeState.setModifiedTime(modifiedTime);

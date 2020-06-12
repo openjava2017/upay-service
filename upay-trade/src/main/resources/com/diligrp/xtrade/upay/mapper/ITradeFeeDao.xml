@@ -2,40 +2,22 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.diligrp.xtrade.upay.trade.dao.ITradeFeeDao">
-    <resultMap id="TradeFeeMap" type="com.diligrp.xtrade.upay.trade.model.TradeFee">
-        <id column="id" property="id"/>
-        <result column="trade_id" property="tradeId"/>
-        <result column="amount" property="amount"/>
-        <result column="type" property="type"/>
-        <result column="created_time" property="createdTime"/>
-    </resultMap>
-
+<mapper namespace="com.diligrp.xtrade.upay.trade.dao.IPaymentFeeDao">
     <resultMap id="PaymentFeeMap" type="com.diligrp.xtrade.upay.trade.model.PaymentFee">
         <id column="id" property="id"/>
         <result column="payment_id" property="paymentId"/>
+        <result column="use_for" property="useFor"/>
         <result column="amount" property="amount"/>
         <result column="type" property="type"/>
+        <result column="type_name" property="typeName"/>
         <result column="created_time" property="createdTime"/>
     </resultMap>
 
-    <insert id="insertTradeFees" parameterType="java.util.List">
-        INSERT INTO upay_trade_fee(trade_id, amount, type, created_time)
-        VALUES
-        <foreach collection="list" item="item" separator=",">
-            (#{item.tradeId}, #{item.amount}, #{item.type}, #{item.createdTime})
-        </foreach>
-    </insert>
-
-    <select id="findTradeFees" parameterType="string" resultMap="TradeFeeMap">
-        SELECT * FROM upay_trade_fee WHERE trade_id = #{tradeId} ORDER BY ID
-    </select>
-
     <insert id="insertPaymentFees" parameterType="java.util.List">
-        INSERT INTO upay_payment_fee(payment_id, amount, type, created_time)
+        INSERT INTO upay_payment_fee(payment_id, use_for, amount, type, type_name, created_time)
         VALUES
         <foreach collection="list" item="item" separator=",">
-            (#{item.paymentId}, #{item.amount}, #{item.type}, #{item.createdTime})
+            (#{item.paymentId}, #{item.useFor}, #{item.amount}, #{item.type}, #{item.typeName}, #{item.createdTime})
         </foreach>
     </insert>
 

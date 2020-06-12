@@ -7,12 +7,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Repository("tradeFeeDao")
-public interface ITradeFeeDao extends MybatisMapperSupport {
-    void insertTradeFees(List<TradeFee> fees);
-
-    List<TradeFee> findTradeFees(String tradeId);
-
+@Repository("paymentFeeDao")
+public interface IPaymentFeeDao extends MybatisMapperSupport {
     void insertPaymentFees(List<PaymentFee> fees);
 
     List<PaymentFee> findPaymentFees(String paymentId);

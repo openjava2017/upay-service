@@ -8,38 +8,44 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
- * 资金账户类型
+ * 账户业务用途
  */
-public enum AccountType implements IEnumType {
+public enum UseFor implements IEnumType {
 
-    PERSONAL("个人", 1),
+    FOR_TRADE("交易账户", 1),
 
-    PUBLIC("对公", 2),
+    FOR_FEE("缴费账户", 2),
 
-    MERCHANT("商户", 3);
+    FOR_DEPOSIT("预存账户", 3),
+
+    FOR_PROFIT("收益账户", 10),
+
+    FOR_VOUCH("担保账户", 11),
+
+    FOR_PLEDGE("押金账户", 12);
 
     private String name;
     private int code;
 
-    AccountType(String name, int code) {
+    UseFor(String name, int code) {
         this.name = name;
         this.code = code;
     }
 
-    public static Optional<AccountType> getType(int code) {
-        Stream<AccountType> TYPES = Arrays.stream(AccountType.values());
+    public static Optional<UseFor> getType(int code) {
+        Stream<UseFor> TYPES = Arrays.stream(UseFor.values());
         return TYPES.filter(type -> type.getCode() == code).findFirst();
     }
 
     public static String getName(int code) {
-        Stream<AccountType> TYPES = Arrays.stream(AccountType.values());
+        Stream<UseFor> TYPES = Arrays.stream(UseFor.values());
         Optional<String> result = TYPES.filter(type -> type.getCode() == code)
-            .map(AccountType::getName).findFirst();
+            .map(UseFor::getName).findFirst();
         return result.isPresent() ? result.get() : null;
     }
 
-    public static List<AccountType> getTypeList() {
-        return Arrays.asList(AccountType.values());
+    public static List<UseFor> getTypeList() {
+        return Arrays.asList(UseFor.values());
     }
 
     @Override

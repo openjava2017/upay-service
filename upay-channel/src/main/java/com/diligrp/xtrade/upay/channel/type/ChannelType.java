@@ -8,8 +8,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
- * @author: brenthuang
- * @date: 2020/03/24
+ * 支持的渠道
  */
 public enum ChannelType implements IEnumType {
 
@@ -17,7 +16,9 @@ public enum ChannelType implements IEnumType {
 
     CASH("现金渠道", 2),
 
-    POS("POS渠道", 3);
+    POS("POS渠道", 3),
+
+    E_BANK("网银渠道", 4);
 
     private String name;
     private int code;
@@ -41,6 +42,27 @@ public enum ChannelType implements IEnumType {
 
     public static List<ChannelType> getTypeList() {
         return Arrays.asList(ChannelType.values());
+    }
+
+    /**
+     * 判断渠道是否可用于充值业务
+     */
+    public static boolean forDeposit(int code) {
+        return code == CASH.getCode() || code == POS.getCode() || code == E_BANK.getCode();
+    }
+
+    /**
+     * 判断渠道是否可用于提现业务
+     */
+    public static boolean forWithdraw(int code) {
+        return code == CASH.getCode() || code == E_BANK.getCode();
+    }
+
+    /**
+     * 判断渠道是否可用于缴费业务
+     */
+    public static boolean forFee(int code) {
+        return code == CASH.getCode() || code == ACCOUNT.getCode();
     }
 
     @Override

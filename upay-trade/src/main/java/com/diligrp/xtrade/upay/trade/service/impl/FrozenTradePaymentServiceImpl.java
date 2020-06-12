@@ -20,7 +20,7 @@ import com.diligrp.xtrade.upay.trade.domain.*;
 import com.diligrp.xtrade.upay.trade.exception.TradePaymentException;
 import com.diligrp.xtrade.upay.trade.model.TradeOrder;
 import com.diligrp.xtrade.upay.trade.model.TradePayment;
-import com.diligrp.xtrade.upay.trade.service.IPreTradePaymentService;
+import com.diligrp.xtrade.upay.trade.service.IFrozenTradePaymentService;
 import com.diligrp.xtrade.upay.trade.type.PaymentState;
 import com.diligrp.xtrade.upay.trade.type.TradeState;
 import com.diligrp.xtrade.upay.trade.type.TradeType;
@@ -33,7 +33,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service("preTradePaymentService")
-public class PreTradePaymentServiceImpl implements IPreTradePaymentService {
+public class FrozenTradePaymentServiceImpl implements IFrozenTradePaymentService {
 
     @Resource
     private IAccountChannelService accountChannelService;
@@ -94,7 +94,7 @@ public class PreTradePaymentServiceImpl implements IPreTradePaymentService {
         TradePayment paymentDo = TradePayment.builder().paymentId(paymentId).tradeId(trade.getTradeId())
                 .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
                 .amount(payment.getAmount()).fee(0L).state(PaymentState.PROCESSING.getCode())
-                .description(TradeType.PRE_TRADE.getName()).version(0).createdTime(now).build();
+                .description(TradeType.FROZEN_TRADE.getName()).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
 
         return PaymentResult.of(paymentId, TradeState.SUCCESS.getCode());
@@ -102,20 +102,20 @@ public class PreTradePaymentServiceImpl implements IPreTradePaymentService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
-    public void confirm(PreTradeDto request) {
+    public void confirm(FrozenTradeDto request) {
         Optional<TradePayment> paymentOpt = tradePaymentDao.findTradePaymentById(request.getPaymentId());
         TradePayment payment = paymentOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.OBJECT_NOT_FOUND, "交易不存在"));
         Optional<TradeOrder> tradeOpt = tradeOrderDao.findTradeOrderById(payment.getTradeId());
         TradeOrder trade = tradeOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.OBJECT_NOT_FOUND, "交易不存在"));
-        if (trade.getType() != TradeType.PRE_TRADE.getCode()) {
+        if (trade.getType() != TradeType.FROZEN_TRADE.getCode()) {
             throw new TradePaymentException(ErrorCode.OPERATION_NOT_ALLOWED, "该交易不允许此类操作");
         }
         if (trade.getState() != TradeState.FROZEN.getCode()) {
             throw new TradePaymentException(ErrorCode.OPERATION_NOT_ALLOWED, "无效的交易状态");
         }
-        if (request.getAmount() > trade.getAmount()) {
-            throw new TradePaymentException(ErrorCode.OPERATION_NOT_ALLOWED, "实际付款金额超过预付金额");
-        }
+//        if (request.getAmount() > trade.getAmount()) {
+//            throw new TradePaymentException(ErrorCode.OPERATION_NOT_ALLOWED, "实际付款金额超过预付金额");
+//        }
 
         LocalDateTime when = LocalDateTime.now();
         Optional<FrozenOrder> orderOpt = frozenOrderDao.findFrozenOrderByPaymentId(payment.getPaymentId());
@@ -132,17 +132,17 @@ public class PreTradePaymentServiceImpl implements IPreTradePaymentService {
         accountChannelService.submit(transaction);
 
         FrozenStateDto updateState = FrozenStateDto.of(order.getFrozenId(), FrozenState.UNFROZEN.getCode(),
-                order.getVersion(), when);
+            order.getVersion(), when);
         if (frozenOrderDao.compareAndSetState(updateState) == 0) {
             throw new PaymentChannelException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统忙，请稍后再试");
         }
         PaymentStateDto paymentState = PaymentStateDto.of(payment.getPaymentId(), request.getAmount(),
-                PaymentState.SUCCESS.getCode(), payment.getVersion(), when);
+            PaymentState.SUCCESS.getCode(), payment.getVersion(), when);
         if (tradePaymentDao.compareAndSetState(paymentState) == 0) {
             throw new PaymentChannelException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统忙，请稍后再试");
         }
         TradeStateDto tradeState = TradeStateDto.of(trade.getTradeId(), request.getAmount(),
-                TradeState.SUCCESS.getCode(), trade.getVersion(), when);
+            TradeState.SUCCESS.getCode(), trade.getVersion(), when);
         if (tradeOrderDao.compareAndSetState(tradeState) == 0) {
             throw new PaymentChannelException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统忙，请稍后再试");
         }
@@ -155,7 +155,7 @@ public class PreTradePaymentServiceImpl implements IPreTradePaymentService {
         TradePayment payment = paymentOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.OBJECT_NOT_FOUND, "交易不存在"));
         Optional<TradeOrder> tradeOpt = tradeOrderDao.findTradeOrderById(payment.getTradeId());
         TradeOrder trade = tradeOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.OBJECT_NOT_FOUND, "交易不存在"));
-        if (trade.getType() != TradeType.PRE_TRADE.getCode()) {
+        if (trade.getType() != TradeType.FROZEN_TRADE.getCode()) {
             throw new TradePaymentException(ErrorCode.OPERATION_NOT_ALLOWED, "该交易不允许此类操作");
         }
         if (trade.getState() != TradeState.FROZEN.getCode()) {
@@ -193,6 +193,6 @@ public class PreTradePaymentServiceImpl implements IPreTradePaymentService {
 
     @Override
     public TradeType supportType() {
-        return TradeType.PRE_TRADE;
+        return TradeType.FROZEN_TRADE;
     }
 }

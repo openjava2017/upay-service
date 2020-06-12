@@ -1,6 +1,11 @@
-package com.diligrp.xtrade.upay.trade.domain;
+package com.diligrp.xtrade.upay.core.model;
 
-public class Merchant {
+import com.diligrp.xtrade.shared.domain.BaseDo;
+
+/**
+ * 接入商户数据模型
+ */
+public class Merchant extends BaseDo {
     // 商户ID
     private Long mchId;
     // 商户编码
@@ -12,7 +17,13 @@ public class Merchant {
     // 担保账户
     private Long vouchAccount;
     // 押金账户
-    private Long returnAccount;
+    private Long pledgeAccount;
+    // 商户地址
+    private String address;
+    // 联系人
+    private String contact;
+    // 手机号
+    private String mobile;
     // 商户状态
     private Integer state;
 
@@ -56,12 +67,36 @@ public class Merchant {
         this.vouchAccount = vouchAccount;
     }
 
-    public Long getReturnAccount() {
-        return returnAccount;
+    public Long getPledgeAccount() {
+        return pledgeAccount;
     }
 
-    public void setReturnAccount(Long returnAccount) {
-        this.returnAccount = returnAccount;
+    public void setPledgeAccount(Long pledgeAccount) {
+        this.pledgeAccount = pledgeAccount;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getContact() {
+        return contact;
+    }
+
+    public void setContact(String contact) {
+        this.contact = contact;
+    }
+
+    public String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
     }
 
     public Integer getState() {

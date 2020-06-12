@@ -16,6 +16,7 @@ import com.diligrp.xtrade.upay.core.service.IFundAccountService;
 import com.diligrp.xtrade.upay.core.type.AccountState;
 import com.diligrp.xtrade.upay.core.type.AccountType;
 import com.diligrp.xtrade.upay.core.type.SequenceKey;
+import com.diligrp.xtrade.upay.core.type.UseFor;
 import com.diligrp.xtrade.upay.core.util.AccountStateMachine;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -41,11 +42,13 @@ public class FundAccountServiceImpl implements IFundAccountService {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public long createFundAccount(Long mchId, RegisterAccount account) {
-        Optional<AccountType> accountTypeOpt = AccountType.getType(account.getType());
-        accountTypeOpt.orElseThrow(() -> new FundAccountException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "无效的账号类型"));
+        AccountType.getType(account.getType()).orElseThrow(
+            () -> new FundAccountException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "无效的账号类型"));
+        UseFor.getType(account.getUseFor()).orElseThrow(
+            () -> new FundAccountException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "无效的业务用途"));
         if (account.getGender() != null) {
-            Optional<Gender> genderOpt = Gender.getGender(account.getGender());
-            genderOpt.orElseThrow(() -> new FundAccountException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "无效的性别"));
+            Gender.getGender(account.getGender()).orElseThrow(
+                () -> new FundAccountException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "无效的性别"));
         }
         if (account.getParentId() != null && account.getParentId() != 0) {
             Optional<FundAccount> masterAccount = fundAccountDao.findFundAccountById(account.getParentId());
@@ -61,10 +64,10 @@ public class FundAccountServiceImpl implements IFundAccountService {
         String password = PasswordUtils.encrypt(account.getPassword(), secretKey);
 
         FundAccount fundAccount = FundAccount.builder().customerId(account.getCustomerId()).accountId(accountId)
-                .parentId(parentId).type(account.getType()).code(account.getCode()).name(account.getName())
-                .gender(account.getGender()).mobile(account.getMobile()).email(account.getEmail())
-                .idCode(account.getIdCode()).address(account.getAddress()).password(password).secretKey(secretKey)
-                .state(AccountState.NORMAL.getCode()).mchId(mchId).version(0).createdTime(when).build();
+            .parentId(parentId).type(account.getType()).useFor(account.getUseFor()).code(account.getCode())
+            .name(account.getName()).gender(account.getGender()).mobile(account.getMobile()).email(account.getEmail())
+            .idCode(account.getIdCode()).address(account.getAddress()).password(password).secretKey(secretKey)
+            .state(AccountState.NORMAL.getCode()).mchId(mchId).version(0).createdTime(when).build();
         fundAccountDao.insertFundAccount(fundAccount);
         if (fundAccount.getParentId() == 0) {
             AccountFund accountFund = AccountFund.builder().accountId(accountId).balance(0L).frozenAmount(0L).vouchAmount(0L)

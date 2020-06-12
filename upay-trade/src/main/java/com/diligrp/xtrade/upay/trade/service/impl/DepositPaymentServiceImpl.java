@@ -5,7 +5,7 @@ import com.diligrp.xtrade.upay.channel.service.IAccountChannelService;
 import com.diligrp.xtrade.upay.channel.type.ChannelType;
 import com.diligrp.xtrade.upay.core.ErrorCode;
 import com.diligrp.xtrade.upay.core.model.AccountFund;
-import com.diligrp.xtrade.upay.trade.dao.ITradeFeeDao;
+import com.diligrp.xtrade.upay.trade.dao.IPaymentFeeDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradeOrderDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradePaymentDao;
 import com.diligrp.xtrade.upay.trade.domain.*;
@@ -42,12 +42,12 @@ public class DepositPaymentServiceImpl implements IPaymentService {
     private ITradeOrderDao tradeOrderDao;
 
     @Resource
-    private ITradeFeeDao tradeFeeDao;
+    private IPaymentFeeDao paymentFeeDao;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public PaymentResult commit(TradeOrder trade, Payment payment) {
-        if (payment.getChannelId() != ChannelType.CASH.getCode() && payment.getChannelId() != ChannelType.POS.getCode()) {
+        if (!ChannelType.forDeposit(payment.getChannelId())) {
             throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "不支持该渠道进行账户充值");
         }
         if (!trade.getAccountId().equals(payment.getAccountId())) {
@@ -70,7 +70,7 @@ public class DepositPaymentServiceImpl implements IPaymentService {
 
         // 处理商户收益
         if (!fees.isEmpty()) {
-            Merchant merchant = payment.getObject(Merchant.class.getName(), Merchant.class);
+            MerchantPermit merchant = payment.getObject(MerchantPermit.class.getName(), MerchantPermit.class);
             AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount());
             IFundTransaction feeTransaction = merChannel.openTransaction(trade.getType(), now);
             fees.forEach(fee ->
@@ -79,8 +79,7 @@ public class DepositPaymentServiceImpl implements IPaymentService {
             accountChannelService.submit(feeTransaction);
         }
 
-        TradeStateDto tradeState = TradeStateDto.of(trade.getTradeId(), TradeState.SUCCESS.getCode(),
-                trade.getVersion(), now);
+        TradeStateDto tradeState = TradeStateDto.of(trade.getTradeId(), TradeState.SUCCESS.getCode(), trade.getVersion(), now);
         int result = tradeOrderDao.compareAndSetState(tradeState);
         if (result == 0) {
             throw new TradePaymentException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统正忙，请稍后重试");
@@ -93,9 +92,9 @@ public class DepositPaymentServiceImpl implements IPaymentService {
         tradePaymentDao.insertTradePayment(paymentDo);
         if (!fees.isEmpty()) {
             List<PaymentFee> paymentFeeDos = fees.stream().map(fee ->
-                    PaymentFee.of(paymentId, fee.getAmount(), fee.getType(), now)
+                PaymentFee.of(paymentId, fee.getAmount(), fee.getType(), fee.getTypeName(), now)
             ).collect(Collectors.toList());
-            tradeFeeDao.insertPaymentFees(paymentFeeDos);
+            paymentFeeDao.insertPaymentFees(paymentFeeDos);
         }
 
         return PaymentResult.of(paymentId, TradeState.SUCCESS.getCode(), fund);

@@ -5,13 +5,12 @@ import com.diligrp.xtrade.shared.sapi.CallableComponent;
 import com.diligrp.xtrade.shared.util.AssertUtils;
 import com.diligrp.xtrade.upay.boss.domain.PaymentId;
 import com.diligrp.xtrade.upay.boss.domain.TradeId;
-import com.diligrp.xtrade.upay.trade.domain.Application;
+import com.diligrp.xtrade.upay.trade.domain.ApplicationPermit;
 import com.diligrp.xtrade.upay.trade.domain.PaymentRequest;
-import com.diligrp.xtrade.upay.trade.domain.PreTradeDto;
+import com.diligrp.xtrade.upay.trade.domain.FrozenTradeDto;
 import com.diligrp.xtrade.upay.trade.domain.TradeRequest;
 import com.diligrp.xtrade.upay.trade.service.IPaymentPlatformService;
-import com.diligrp.xtrade.upay.trade.service.IPreTradePaymentService;
-import com.diligrp.xtrade.upay.trade.type.TradeType;
+import com.diligrp.xtrade.upay.trade.service.IFrozenTradePaymentService;
 
 import javax.annotation.Resource;
 
@@ -22,7 +21,7 @@ public class TradeServiceComponent {
     private IPaymentPlatformService paymentPlatformService;
 
     @Resource
-    private IPreTradePaymentService preTradePaymentService;
+    private IFrozenTradePaymentService preTradePaymentService;
 
     /**
      * 创建交易订单，适用于所有交易业务
@@ -35,13 +34,9 @@ public class TradeServiceComponent {
         AssertUtils.notNull(trade.getAccountId(), "accountId missed");
         AssertUtils.notNull(trade.getAmount(), "amount missed");
         // 缴费业务amount=0，否则amount>0
-        if (trade.getType() == TradeType.FEE.getCode()) {
-            AssertUtils.isTrue(trade.getAmount() == 0, "Invalid amount");
-        } else {
-            AssertUtils.isTrue(trade.getAmount() > 0, "Invalid amount");
-        }
+        AssertUtils.isTrue(trade.getAmount() > 0, "Invalid amount");
 
-        Application application = request.getContext().getObject(Application.class.getName(), Application.class);
+        ApplicationPermit application = request.getContext().getObject(ApplicationPermit.class.getName(), ApplicationPermit.class);
         String tradeId = paymentPlatformService.createTrade(application, trade);
         return TradeId.of(tradeId);
     }
@@ -65,7 +60,7 @@ public class TradeServiceComponent {
             AssertUtils.isTrue(fee.getAmount() > 0, "Invalid fee amount");
         }));
 
-        Application application = request.getContext().getObject(Application.class.getName(), Application.class);
+        ApplicationPermit application = request.getContext().getObject(ApplicationPermit.class.getName(), ApplicationPermit.class);
         String paymentId = paymentPlatformService.commit(application, payment);
         return PaymentId.of(paymentId);
     }
@@ -75,8 +70,8 @@ public class TradeServiceComponent {
      * 预付支付交易需经历 prepare->commit->confirm/cancel三个阶段
      * confirm阶段完成资金解冻与消费，消费金额可以小于等于冻结金额（原订单金额）
      */
-    public void confirm(ServiceRequest<PreTradeDto> request) {
-        PreTradeDto preTrade = request.getData();
+    public void confirm(ServiceRequest<FrozenTradeDto> request) {
+        FrozenTradeDto preTrade = request.getData();
         AssertUtils.notEmpty(preTrade.getPaymentId(), "paymentId missed");
         AssertUtils.notNull(preTrade.getAmount(), "amount missed");
         AssertUtils.isTrue(preTrade.getAmount() > 0, "Invalid amount");

@@ -1,8 +1,8 @@
-package com.diligrp.xtrade.upay.trade.dao;
+package com.diligrp.xtrade.upay.core.dao;
 
 import com.diligrp.xtrade.shared.mybatis.MybatisMapperSupport;
-import com.diligrp.xtrade.upay.trade.domain.Application;
-import com.diligrp.xtrade.upay.trade.domain.Merchant;
+import com.diligrp.xtrade.upay.core.model.Application;
+import com.diligrp.xtrade.upay.core.model.Merchant;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;

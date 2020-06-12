@@ -11,9 +11,8 @@ import com.diligrp.xtrade.shared.util.ObjectUtils;
 import com.diligrp.xtrade.upay.boss.util.Constants;
 import com.diligrp.xtrade.upay.core.exception.PaymentServiceException;
 import com.diligrp.xtrade.upay.core.ErrorCode;
-import com.diligrp.xtrade.upay.trade.domain.Application;
-import com.diligrp.xtrade.upay.trade.domain.Merchant;
-import com.diligrp.xtrade.upay.trade.service.IMerchantService;
+import com.diligrp.xtrade.upay.trade.domain.ApplicationPermit;
+import com.diligrp.xtrade.upay.trade.service.IAccessPermitService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +23,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Enumeration;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/payment/spi")
@@ -36,7 +34,7 @@ public class PaymentPlatformController {
     private ICallableServiceManager callableServiceManager;
 
     @Resource
-    private IMerchantService merchantService;
+    private IAccessPermitService accessPermitService;
 
     @RequestMapping(value = "/gateway.do")
     public Message<?> gateway(HttpServletRequest request) {
@@ -54,7 +52,7 @@ public class PaymentPlatformController {
             String charset = context.getString(Constants.PARAM_CHARSET);
             MessageEnvelop envelop = MessageEnvelop.of(appId, service, accessToken, payload, signature, charset);
 
-            Application application = checkAccessPermission(context, envelop);
+            ApplicationPermit application = checkAccessPermission(context, envelop);
             // 如果应用配置了调用方的公钥信息，则进行数据验签
             if (ObjectUtils.isNotEmpty(application.getSecretKey())) {
                 envelop.unpackEnvelop(application.getSecretKey());
@@ -79,21 +77,14 @@ public class PaymentPlatformController {
         }
     }
 
-    private Application checkAccessPermission(RequestContext context, MessageEnvelop envelop) {
-        Optional<Application> applicationOpt = merchantService.findApplicationById(envelop.getAppId());
-        Application application = applicationOpt.orElseThrow(() -> new ServiceAccessException(
-                ErrorCode.UNAUTHORIZED_ACCESS_ERROR, "应用信息未注册"));
-
-        Optional<Merchant> merchantOpt = merchantService.findMerchantById(application.getMchId());
-        Merchant merchant = merchantOpt.orElseThrow(() -> new ServiceAccessException(
-                ErrorCode.UNAUTHORIZED_ACCESS_ERROR, "商户信息未注册"));
-        application.setMerchant(merchant);
+    private ApplicationPermit checkAccessPermission(RequestContext context, MessageEnvelop envelop) {
+        ApplicationPermit application = accessPermitService.loadApplicationPermit(envelop.getAppId());
 
         // 校验应用访问权限, 暂时不校验商户状态
         if (!ObjectUtils.equals(envelop.getAccessToken(), application.getAccessToken())) {
             throw new ServiceAccessException(ErrorCode.UNAUTHORIZED_ACCESS_ERROR, "未授权的服务访问");
         }
-        context.put(Application.class.getName(), application);
+        context.put(ApplicationPermit.class.getName(), application);
         return application;
     }
 

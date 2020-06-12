@@ -7,6 +7,8 @@ public class RegisterAccount {
     private Long parentId;
     // 账号类型
     private Integer type;
+    // 业务用途
+    private Integer useFor;
     // 登陆账号-卡号
     private String code;
     // 姓名
@@ -46,6 +48,14 @@ public class RegisterAccount {
 
     public void setType(Integer type) {
         this.type = type;
+    }
+
+    public Integer getUseFor() {
+        return useFor;
+    }
+
+    public void setUseFor(Integer useFor) {
+        this.useFor = useFor;
     }
 
     public String getCode() {

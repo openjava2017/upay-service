@@ -7,10 +7,14 @@ import java.time.LocalDateTime;
 public class PaymentFee extends BaseDo {
     // 支付ID
     private String paymentId;
+    // 费用用途
+    private Integer useFor;
     // 金额-分
     private Long amount;
     // 费用类型
     private Integer type;
+    // 费用描述
+    private String typeName;
 
     public String getPaymentId() {
         return paymentId;
@@ -18,6 +22,14 @@ public class PaymentFee extends BaseDo {
 
     public void setPaymentId(String paymentId) {
         this.paymentId = paymentId;
+    }
+
+    public Integer getUseFor() {
+        return useFor;
+    }
+
+    public void setUseFor(Integer useFor) {
+        this.useFor = useFor;
     }
 
     public Long getAmount() {
@@ -36,11 +48,25 @@ public class PaymentFee extends BaseDo {
         this.type = type;
     }
 
-    public static PaymentFee of(String paymentId, Long amount, Integer type, LocalDateTime when) {
+    public String getTypeName() {
+        return typeName;
+    }
+
+    public void setTypeName(String typeName) {
+        this.typeName = typeName;
+    }
+
+    public static PaymentFee of(String paymentId, Long amount, Integer type, String typeName, LocalDateTime when) {
+        return of(paymentId, null, amount, type, typeName, when);
+    }
+
+    public static PaymentFee of(String paymentId, Integer useFor, Long amount, Integer type, String typeName, LocalDateTime when) {
         PaymentFee fee = new PaymentFee();
         fee.setPaymentId(paymentId);
+        fee.setUseFor(useFor);
         fee.setAmount(amount);
         fee.setType(type);
+        fee.setTypeName(typeName);
         fee.setCreatedTime(when);
         return fee;
     }

@@ -1,18 +1,14 @@
 package com.diligrp.xtrade.upay.trade.domain;
 
-public class Application {
+public class ApplicationPermit {
     // 应用ID
     private Long appId;
-    // 商户ID
-    private Long mchId;
-    // 应用名称
-    private String name;
     // 授权Token
     private String accessToken;
     // 安全密钥-数据签名验签的公钥
     private String secretKey;
     // 商户信息
-    private Merchant merchant;
+    private MerchantPermit merchant;
 
     public Long getAppId() {
         return appId;
@@ -20,22 +16,6 @@ public class Application {
 
     public void setAppId(Long appId) {
         this.appId = appId;
-    }
-
-    public Long getMchId() {
-        return mchId;
-    }
-
-    public void setMchId(Long mchId) {
-        this.mchId = mchId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getAccessToken() {
@@ -54,11 +34,21 @@ public class Application {
         this.secretKey = secretKey;
     }
 
-    public Merchant getMerchant() {
+    public MerchantPermit getMerchant() {
         return merchant;
     }
 
-    public void setMerchant(Merchant merchant) {
+    public void setMerchant(MerchantPermit merchant) {
         this.merchant = merchant;
+    }
+
+    public static ApplicationPermit of(Long appId, String accessToken, String secretKey, MerchantPermit merchant) {
+        ApplicationPermit permit = new ApplicationPermit();
+        permit.setAppId(appId);
+        permit.setAccessToken(accessToken);
+        permit.setSecretKey(secretKey);
+        permit.setMerchant(merchant);
+
+        return permit;
     }
 }

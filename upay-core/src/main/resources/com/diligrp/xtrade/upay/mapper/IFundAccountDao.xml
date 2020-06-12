@@ -9,6 +9,7 @@
         <result column="account_id" property="accountId"/>
         <result column="parent_id" property="parentId"/>
         <result column="type" property="type"/>
+        <result column="use_for" property="useFor"/>
         <result column="code" property="code"/>
         <result column="name" property="name"/>
         <result column="gender" property="gender"/>
@@ -29,11 +30,11 @@
     </resultMap>
 
     <insert id="insertFundAccount" parameterType="com.diligrp.xtrade.upay.core.model.FundAccount">
-        INSERT INTO upay_fund_account(customer_id, account_id, parent_id, type, code, name, gender,
+        INSERT INTO upay_fund_account(customer_id, account_id, parent_id, type, use_for, code, name, gender,
           mobile, email, id_code, address, login_pwd, password, login_time, secret_key,
           state, lock_time, mch_id, version, created_time, modified_time)
         VALUES
-          (#{customerId}, #{accountId}, #{parentId}, #{type}, #{code}, #{name}, #{gender},
+          (#{customerId}, #{accountId}, #{parentId}, #{type}, #{useFor}, #{code}, #{name}, #{gender},
            #{mobile}, #{email}, #{idCode}, #{address}, #{loginPwd}, #{password}, #{loginTime}, #{secretKey},
            #{state}, #{lockTime}, #{mchId}, #{version}, #{createdTime}, #{modifiedTime})
     </insert>

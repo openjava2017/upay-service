@@ -13,7 +13,9 @@ public class FundAccount extends BaseDo {
     private Long parentId;
     // 账号类型
     private Integer type;
-    // 登录账号
+    // 业务用途
+    private Integer useFor;
+    // 登录账号 - 客户编码
     private String code;
     // 用户名
     private String name;
@@ -74,6 +76,14 @@ public class FundAccount extends BaseDo {
 
     public void setType(Integer type) {
         this.type = type;
+    }
+
+    public Integer getUseFor() {
+        return useFor;
+    }
+
+    public void setUseFor(Integer useFor) {
+        this.useFor = useFor;
     }
 
     public String getCode() {
@@ -218,6 +228,11 @@ public class FundAccount extends BaseDo {
 
         public Builder type(Integer type) {
             FundAccount.this.type = type;
+            return this;
+        }
+
+        public Builder useFor(Integer useFor) {
+            FundAccount.this.useFor = useFor;
             return this;
         }
 
