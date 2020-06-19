@@ -1,13 +1,9 @@
 package com.diligrp.xtrade.upay.trade.domain;
 
 import com.diligrp.xtrade.shared.util.AssertUtils;
+import com.diligrp.xtrade.upay.core.util.Constants;
 
 public class Fee {
-    // 买家费用
-    private static final int FOR_BUYER = 1;
-    // 卖家费用
-    private static final int FOR_SELLER = 2;
-
     // 金额-元
     private Long amount;
     // 费用类型
@@ -50,20 +46,21 @@ public class Fee {
     }
 
     /**
-     * 费用是否应用于买家
+     * 费用是否应用于买家, 规则同PaymentFee.forBuyer
      */
     public boolean forBuyer() {
-        return useFor == null ? false : useFor == FOR_BUYER;
+        return useFor == null ? false : useFor == Constants.FOR_BUYER;
     }
 
     /**
-     * 费用是否应用于卖家-默认为卖家费用
+     * 费用是否应用于卖家-默认为卖家费用, 规则同PaymentFee.forSeller
      */
     public boolean forSeller() {
-        return useFor == null ? true : useFor == FOR_SELLER;
+        return useFor == null ? true : useFor == Constants.FOR_SELLER;
     }
 
     public void checkUseFor() {
-        AssertUtils.isTrue(useFor == null || useFor == FOR_BUYER && useFor == FOR_SELLER, "invalid fee useFor");
+        AssertUtils.isTrue(useFor == null || useFor == Constants.FOR_BUYER ||
+            useFor == Constants.FOR_SELLER, "invalid fee useFor");
     }
 }

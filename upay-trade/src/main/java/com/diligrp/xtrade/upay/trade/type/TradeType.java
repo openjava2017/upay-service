@@ -19,23 +19,27 @@ public enum TradeType implements IEnumType {
 
     FEE("缴费", 12),
 
-    PRE_DEPOSIT("预存款", 13),
+    AUTH_FEE("预授权缴费", 13),
+
+    PRE_DEPOSIT("预存款", 14),
 
     DIRECT_TRADE("即时交易", 20),
 
-    FROZEN_TRADE("交易冻结", 21),
+    AUTH_TRADE("预授权交易", 21),
 
-    TRANSFER("转账", 22),
+    VOUCH_TRADE("担保交易", 22),
 
-    BANK_DEPOSIT("圈存", 30),
+    TRANSFER("账户转账", 23),
 
-    BANK_WITHDRAW("圈提", 31),
+    BANK_DEPOSIT("银行圈存", 30),
+
+    BANK_WITHDRAW("银行圈提", 31),
 
     CANCEL("交易撤销", 40),
 
     REFUND("交易退款", 41),
 
-    CORRECT("冲正", 42);
+    CORRECT("交易冲正", 42);
 
     private String name;
     private int code;

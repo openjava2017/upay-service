@@ -2,11 +2,17 @@ package com.diligrp.xtrade.upay.trade.domain;
 
 import com.diligrp.xtrade.upay.core.model.AccountFund;
 
-public class PaymentResult {
+import java.util.HashMap;
+import java.util.Optional;
+
+public class PaymentResult extends HashMap<String, Object> {
+    // 交易成功
+    public static final int CODE_SUCCESS = 200;
+
+    // 交易状态
+    private int code;
     // 支付ID
     private String paymentId;
-    // 支付状态
-    private Integer state;
     // 账户资金
     private AccountFund fund;
 
@@ -18,12 +24,12 @@ public class PaymentResult {
         this.paymentId = paymentId;
     }
 
-    public Integer getState() {
-        return state;
+    public int getCode() {
+        return code;
     }
 
-    public void setState(Integer state) {
-        this.state = state;
+    public void setCode(int code) {
+        this.code = code;
     }
 
     public AccountFund getFund() {
@@ -34,17 +40,22 @@ public class PaymentResult {
         this.fund = fund;
     }
 
-    public static PaymentResult of(String paymentId, Integer state) {
-        PaymentResult paymentState = new PaymentResult();
-        paymentState.setPaymentId(paymentId);
-        paymentState.setState(state);
-        return paymentState;
+    public Optional<AccountFund> fund() {
+        return Optional.ofNullable(fund);
     }
 
-    public static PaymentResult of(String paymentId, Integer state, AccountFund fund) {
+    public boolean isSuccess() {
+        return code == CODE_SUCCESS;
+    }
+
+    public static PaymentResult of(int code, String paymentId) {
+        return PaymentResult.of(code, paymentId, null);
+    }
+
+    public static PaymentResult of(int code, String paymentId, AccountFund fund) {
         PaymentResult paymentState = new PaymentResult();
         paymentState.setPaymentId(paymentId);
-        paymentState.setState(state);
+        paymentState.setCode(code);
         paymentState.setFund(fund);
         return paymentState;
     }

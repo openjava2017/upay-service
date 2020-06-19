@@ -90,7 +90,7 @@ CREATE TABLE `upay_fund_account` (
   `created_time` DATETIME COMMENT '创建时间',
   `modified_time` DATETIME COMMENT '修改时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `udx_fund_account_accountId` (`account_id`) USING BTREE,
+  UNIQUE KEY `uk_fund_account_accountId` (`account_id`) USING BTREE,
   KEY `idx_fund_account_parentId` (`parent_id`) USING BTREE,
   KEY `idx_fund_account_code` (`code`) USING BTREE,
   KEY `idx_fund_account_name` (`name`) USING BTREE,
@@ -115,12 +115,12 @@ CREATE TABLE `upay_account_fund` (
   `created_time` DATETIME COMMENT '创建时间',
   `modified_time` DATETIME COMMENT '修改时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `udx_account_fund_accountId` (`account_id`) USING BTREE
+  UNIQUE KEY `uk_account_fund_accountId` (`account_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------------------
 -- 账户资金流水表
--- 说明：任何一条资金流水（资金变动）都是一次交易订单的支付行为产生；
+-- 说明：任何一条资金流水（资金变动）都是一次交易订单或交易退款的支付行为产生；
 -- 资金流水动作包含收入和支出，支出时流水金额amount为负值，否则为正值；
 -- 资金类型包括账户资金、手续费和工本费等，余额balance为期初余额；
 -- 资金流水的交易类型标识由哪种业务产生，包括：充值、提现、交易等；
@@ -176,7 +176,7 @@ CREATE TABLE `upay_trade_order` (
   `created_time` DATETIME COMMENT '创建时间',
   `modified_time` DATETIME COMMENT '修改时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `udx_trade_order_tradeId` (`trade_id`) USING BTREE,
+  UNIQUE KEY `uk_trade_order_tradeId` (`trade_id`) USING BTREE,
   KEY `idx_trade_order_accountId` (`account_id`, `type`) USING BTREE,
   KEY `idx_trade_order_serialNo` (`serial_no`) USING BTREE,
   KEY `idx_trade_order_cycleNo` (`cycle_no`) USING BTREE
@@ -187,6 +187,7 @@ CREATE TABLE `upay_trade_order` (
 -- 说明：交易支付表用于存储付款方信息，付款方包括园区账户、银行、第三方支付渠道等；
 -- 数据模型理论上一条交易订单可以有多条支付记录，支付金额可以小于或等于交易订单金额；
 -- 所有支付都对应一个支付渠道，即使现金；费用金额用于存储向付款方(园区账户)收取的费用。
+-- 组合支付时一个交易订单对应多个支付记录，一个交易订单同一种支付渠道只能有一条记录。
 -- --------------------------------------------------------------------
 DROP TABLE IF EXISTS `upay_trade_payment`;
 CREATE TABLE `upay_trade_payment` (
@@ -205,9 +206,33 @@ CREATE TABLE `upay_trade_payment` (
   `created_time` DATETIME COMMENT '创建时间',
   `modified_time` DATETIME COMMENT '修改时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `udx_trade_payment_paymentId` (`payment_id`) USING BTREE,
-  KEY `idx_trade_payment_tradeId` (`trade_id`) USING BTREE,
+  UNIQUE KEY `uk_trade_payment_paymentId` (`payment_id`) USING BTREE,
+  UNIQUE KEY `idx_trade_payment_tradeId` (`trade_id`, `channel_id`) USING BTREE,
   KEY `idx_trade_payment_accountId` (`account_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------------------
+-- 退款表
+-- 说明：退款类型包括交易撤销、交易退款和交易冲正，都是对原交易记录的资金逆向操作；
+-- 交易退款与交易支付相同都是对交易订单进行的资金操作，一个是支付一个是退款；
+-- --------------------------------------------------------------------
+DROP TABLE IF EXISTS `upay_trade_refund`;
+CREATE TABLE `upay_refund_payment` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `payment_id` VARCHAR(40) NOT NULL COMMENT '退款支付ID',
+  `type` TINYINT UNSIGNED NOT NULL COMMENT '退款类型',
+  `trade_id` VARCHAR(40) NOT NULL COMMENT '原交易ID',
+  `trade_type` TINYINT UNSIGNED NOT NULL COMMENT '原交易类型',
+  `amount` BIGINT NOT NULL COMMENT '金额-分',
+  `fee` BIGINT NOT NULL COMMENT '费用金额-分',
+  `state` TINYINT UNSIGNED NOT NULL COMMENT '状态',
+  `description` VARCHAR(128) COMMENT '备注',
+  `version` INTEGER UNSIGNED NOT NULL COMMENT '数据版本号',
+  `created_time` DATETIME COMMENT '创建时间',
+  `modified_time` DATETIME COMMENT '修改时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_refund_payment_paymentId` (`payment_id`) USING BTREE,
+  KEY `idx_refund_payment_tradeId` (`trade_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------------------
@@ -250,36 +275,9 @@ CREATE TABLE `upay_frozen_order` (
   `created_time` DATETIME COMMENT '创建时间',
   `modified_time` DATETIME COMMENT '修改时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `udx_frozen_order_frozenId` (`frozen_id`) USING BTREE,
-  UNIQUE KEY `udx_frozen_order_paymentId` (`payment_id`) USING BTREE,
+  UNIQUE KEY `uk_frozen_order_frozenId` (`frozen_id`) USING BTREE,
+  UNIQUE KEY `uk_frozen_order_paymentId` (`payment_id`) USING BTREE,
   KEY `idx_frozen_order_accountId` (`account_id`, `type`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------------------
--- 资金退款表
--- 说明：退款包括交易退款和系统冲正，都是对原交易记录的资金逆向操作；
--- 退款也是一类交易，因此仍然兼容upay_trade_order数据处理逻辑，此表是退款申请表，
--- 也是新老交易的关联表，退款的真正实施仍然通过upay_trade_oder进行；
--- refund_id为新的交易ID(upay_trade_order.trade_id)，trade_id为原交易ID；
--- 退款时需校验退款方（原收款方）身份account_id。
--- --------------------------------------------------------------------
-DROP TABLE IF EXISTS `upay_refund_transaction`;
-CREATE TABLE `upay_refund_transaction` (
-  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `refund_id` VARCHAR(40) NOT NULL COMMENT '交易ID',
-  `trade_id` VARCHAR(40) NOT NULL COMMENT '原交易ID',
-  `account_id` BIGINT NOT NULL COMMENT '账号ID',
-  `type` TINYINT UNSIGNED NOT NULL COMMENT '类型-交易退款 系统冲正',
-  `amount` BIGINT NOT NULL COMMENT '金额-分',
-  `state` TINYINT UNSIGNED NOT NULL COMMENT '状态',
-  `description` VARCHAR(128) COMMENT '备注',
-  `version` INTEGER UNSIGNED NOT NULL COMMENT '数据版本号',
-  `created_time` DATETIME COMMENT '创建时间',
-  `modified_time` DATETIME COMMENT '修改时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `udx_refund_transaction_refundId` (`refund_id`) USING BTREE,
-  KEY `idx_refund_transaction_tradeId` (`trade_id`) USING BTREE,
-  KEY `idx_refund_transaction_accountId` (`account_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------------------

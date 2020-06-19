@@ -17,13 +17,13 @@ public enum TradeState implements IEnumType {
 
     PROCESSING("处理中", 2),
 
-    SUCCESS("交易成功", 3),
+    FROZEN("交易冻结", 3),
 
-    FROZEN("交易冻结", 4),
+    SUCCESS("交易成功", 4),
 
     REFUND("交易退款", 5),
 
-    CANCELED("交易取消", 6),
+    CANCELED("交易撤销", 6),
 
     CLOSED("交易关闭", 7);
 
@@ -49,6 +49,14 @@ public enum TradeState implements IEnumType {
 
     public static List<TradeState> getStateList() {
         return Arrays.asList(TradeState.values());
+    }
+
+    public static boolean forCancel(int state) {
+        return state == TradeState.FROZEN.getCode() || state == TradeState.SUCCESS.getCode();
+    }
+
+    public static boolean forConfirm(int state) {
+        return state == TradeState.FROZEN.getCode();
     }
 
     @Override

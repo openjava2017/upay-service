@@ -1,21 +1,16 @@
 package com.diligrp.xtrade.upay.trade.domain;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-public class PaymentRequest {
+public class ConfirmRequest {
     // 交易ID
     private String tradeId;
-    // 资金账号ID
-    private Long accountId;
-    // 支付渠道
-    private Integer channelId;
+    // 确认消费金额
+    private Long amount;
     // 支付密码
     private String password;
-    // 银行卡号-用于银行渠道进行圈存圈提
-    private String cardNo;
-    // 费用列表
+    // 缴费
     private List<Fee> fees;
 
     public String getTradeId() {
@@ -26,20 +21,12 @@ public class PaymentRequest {
         this.tradeId = tradeId;
     }
 
-    public Long getAccountId() {
-        return accountId;
+    public Long getAmount() {
+        return amount;
     }
 
-    public void setAccountId(Long accountId) {
-        this.accountId = accountId;
-    }
-
-    public Integer getChannelId() {
-        return channelId;
-    }
-
-    public void setChannelId(Integer channelId) {
-        this.channelId = channelId;
+    public void setAmount(Long amount) {
+        this.amount = amount;
     }
 
     public String getPassword() {
@@ -50,16 +37,8 @@ public class PaymentRequest {
         this.password = password;
     }
 
-    public String getCardNo() {
-        return cardNo;
-    }
-
-    public void setCardNo(String cardNo) {
-        this.cardNo = cardNo;
-    }
-
     public List<Fee> getFees() {
-        return fees == null ? Collections.EMPTY_LIST : fees;
+        return fees;
     }
 
     public void setFees(List<Fee> fees) {

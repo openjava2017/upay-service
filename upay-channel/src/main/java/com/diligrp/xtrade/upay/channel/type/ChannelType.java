@@ -65,6 +65,13 @@ public enum ChannelType implements IEnumType {
         return code == CASH.getCode() || code == ACCOUNT.getCode();
     }
 
+    /**
+     * 判断渠道是否可用于"预授权缴费"业务
+     */
+    public static boolean forPreAuthFee(int code) {
+        return code == ACCOUNT.getCode();
+    }
+
     @Override
     public String getName() {
         return name;

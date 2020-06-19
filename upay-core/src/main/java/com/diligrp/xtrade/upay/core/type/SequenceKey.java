@@ -5,5 +5,7 @@ public enum SequenceKey {
 
     TRADE_ID,
 
+    PAYMENT_ID,
+
     FROZEN_ID;
 }

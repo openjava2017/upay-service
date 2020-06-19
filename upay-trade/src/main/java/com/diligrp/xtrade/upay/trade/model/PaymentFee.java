@@ -1,6 +1,7 @@
 package com.diligrp.xtrade.upay.trade.model;
 
 import com.diligrp.xtrade.shared.domain.BaseDo;
+import com.diligrp.xtrade.upay.core.util.Constants;
 
 import java.time.LocalDateTime;
 
@@ -54,6 +55,20 @@ public class PaymentFee extends BaseDo {
 
     public void setTypeName(String typeName) {
         this.typeName = typeName;
+    }
+
+    /**
+     * 费用是否应用于买家, 规则同PaymentFee.forBuyer
+     */
+    public boolean forBuyer() {
+        return useFor == null ? false : useFor == Constants.FOR_BUYER;
+    }
+
+    /**
+     * 费用是否应用于卖家-默认为卖家费用, 规则同PaymentFee.forSeller
+     */
+    public boolean forSeller() {
+        return useFor == null ? true : useFor == Constants.FOR_SELLER;
     }
 
     public static PaymentFee of(String paymentId, Long amount, Integer type, String typeName, LocalDateTime when) {

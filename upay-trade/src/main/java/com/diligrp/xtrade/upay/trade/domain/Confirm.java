@@ -4,31 +4,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
-public class Payment extends HashMap<String, Object> {
-    // 资金账号ID
-    private Long accountId;
-    // 支付金额
+/**
+ * 确认交易模型-适用于预授权交易
+ *
+ */
+public class Confirm extends HashMap<String, Object> {
+    // 操作金额
     private Long amount;
-    // 支付渠道
-    private Integer channelId;
     // 支付密码
     private String password;
 
-    public static Payment of(Long accountId, Long amount, Integer channelId, String password) {
-        Payment payment = new Payment();
-        payment.setAccountId(accountId);
-        payment.setAmount(amount);
-        payment.setChannelId(channelId);
-        payment.setPassword(password);
-        return payment;
-    }
-
-    public Long getAccountId() {
-        return accountId;
-    }
-
-    public void setAccountId(Long accountId) {
-        this.accountId = accountId;
+    public static Confirm of(Long amount, String password) {
+        Confirm refund = new Confirm();
+        refund.setAmount(amount);
+        refund.setPassword(password);
+        return refund;
     }
 
     public Long getAmount() {
@@ -37,14 +27,6 @@ public class Payment extends HashMap<String, Object> {
 
     public void setAmount(Long amount) {
         this.amount = amount;
-    }
-
-    public Integer getChannelId() {
-        return channelId;
-    }
-
-    public void setChannelId(Integer channelId) {
-        this.channelId = channelId;
     }
 
     public String getPassword() {

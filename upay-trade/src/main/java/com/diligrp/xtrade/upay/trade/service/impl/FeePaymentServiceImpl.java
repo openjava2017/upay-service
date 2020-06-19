@@ -1,22 +1,37 @@
 package com.diligrp.xtrade.upay.trade.service.impl;
 
+import com.diligrp.xtrade.shared.exception.ServiceAccessException;
+import com.diligrp.xtrade.shared.sequence.ISerialKeyGenerator;
+import com.diligrp.xtrade.shared.sequence.KeyGeneratorManager;
 import com.diligrp.xtrade.upay.channel.domain.AccountChannel;
 import com.diligrp.xtrade.upay.channel.domain.IFundTransaction;
 import com.diligrp.xtrade.upay.channel.service.IAccountChannelService;
 import com.diligrp.xtrade.upay.channel.type.ChannelType;
 import com.diligrp.xtrade.upay.core.ErrorCode;
+import com.diligrp.xtrade.upay.core.dao.IMerchantDao;
+import com.diligrp.xtrade.upay.core.model.AccountFund;
+import com.diligrp.xtrade.upay.core.type.SequenceKey;
 import com.diligrp.xtrade.upay.trade.dao.IPaymentFeeDao;
+import com.diligrp.xtrade.upay.trade.dao.IRefundPaymentDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradeOrderDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradePaymentDao;
-import com.diligrp.xtrade.upay.trade.domain.*;
+import com.diligrp.xtrade.upay.trade.domain.Fee;
+import com.diligrp.xtrade.upay.trade.domain.MerchantPermit;
+import com.diligrp.xtrade.upay.trade.domain.Payment;
+import com.diligrp.xtrade.upay.trade.domain.PaymentResult;
+import com.diligrp.xtrade.upay.trade.domain.PaymentStateDto;
+import com.diligrp.xtrade.upay.trade.domain.Refund;
+import com.diligrp.xtrade.upay.trade.domain.TradeStateDto;
 import com.diligrp.xtrade.upay.trade.exception.TradePaymentException;
 import com.diligrp.xtrade.upay.trade.model.PaymentFee;
+import com.diligrp.xtrade.upay.trade.model.RefundPayment;
 import com.diligrp.xtrade.upay.trade.model.TradeOrder;
 import com.diligrp.xtrade.upay.trade.model.TradePayment;
 import com.diligrp.xtrade.upay.trade.service.IPaymentService;
 import com.diligrp.xtrade.upay.trade.type.PaymentState;
 import com.diligrp.xtrade.upay.trade.type.TradeState;
 import com.diligrp.xtrade.upay.trade.type.TradeType;
+import com.diligrp.xtrade.upay.trade.util.PaymentDatedIdStrategy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,16 +55,25 @@ public class FeePaymentServiceImpl implements IPaymentService {
     private ITradeOrderDao tradeOrderDao;
 
     @Resource
+    private IRefundPaymentDao refundPaymentDao;
+
+    @Resource
     private IPaymentFeeDao paymentFeeDao;
+
+    @Resource
+    private IMerchantDao merchantDao;
+
+    @Resource
+    private KeyGeneratorManager keyGeneratorManager;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public PaymentResult commit(TradeOrder trade, Payment payment) {
         if (!ChannelType.forFee(payment.getChannelId())) {
-            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "不支持该渠道进行账户充值");
+            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "不支持该渠道进行缴费业务");
         }
         if (!trade.getAccountId().equals(payment.getAccountId())) {
-            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "账号不一致");
+            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "缴费账号不一致");
         }
 
         MerchantPermit merchant = payment.getObject(MerchantPermit.class.getName(), MerchantPermit.class);
@@ -63,13 +87,14 @@ public class FeePaymentServiceImpl implements IPaymentService {
         // 处理账户余额缴费
         String paymentId = trade.getTradeId();
         LocalDateTime now = LocalDateTime.now();
+        AccountFund fund = null;
         if (payment.getChannelId() == ChannelType.ACCOUNT.getCode()) {
             AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId());
             IFundTransaction transaction = channel.openTransaction(trade.getType(), now);
             fees.forEach(fee ->
                 transaction.outgo(fee.getAmount(), fee.getType(), fee.getTypeName())
             );
-            accountChannelService.submit(transaction);
+            fund = accountChannelService.submit(transaction);
         }
 
         // 处理商户收款
@@ -98,7 +123,67 @@ public class FeePaymentServiceImpl implements IPaymentService {
         ).collect(Collectors.toList());
         paymentFeeDao.insertPaymentFees(paymentFeeDos);
 
-        return PaymentResult.of(paymentId, TradeState.SUCCESS.getCode(), null);
+        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, fund);
+    }
+
+    /**
+     * 撤销交易-退所有金额，交易撤销需要修改交易订单状态
+     */
+    @Override
+    public PaymentResult cancel(TradeOrder trade, Refund cancel) {
+        if (trade.getState() != TradeState.SUCCESS.getCode()) {
+            throw new TradePaymentException(ErrorCode.OPERATION_NOT_ALLOWED, "无效的交易状态，不能进行撤销操作");
+        }
+        // "缴费"不存在组合支付的情况，因此一个交易订单只对应一条支付记录
+        Optional<TradePayment> paymentOpt = tradePaymentDao.findOneTradePayment(trade.getTradeId());
+        TradePayment payment = paymentOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.OBJECT_NOT_FOUND, "支付记录不存在"));
+        List<PaymentFee> fees = paymentFeeDao.findPaymentFees(payment.getPaymentId());
+        long totalFees = fees.stream().mapToLong(PaymentFee::getAmount).sum();
+        if (totalFees != payment.getAmount()) {
+            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "撤销金额与支付金额不一致");
+        }
+
+        // 获取交易订单中的商户收益账号信息，并处理商户退款
+        LocalDateTime now = LocalDateTime.now();
+        MerchantPermit merchant = merchantDao.findMerchantById(trade.getMchId()).map(mer -> MerchantPermit.of(
+            mer.getMchId(), mer.getProfitAccount(), mer.getVouchAccount(), mer.getPledgeAccount()))
+            .orElseThrow(() -> new ServiceAccessException(ErrorCode.OBJECT_NOT_FOUND, "商户信息未注册"));
+        ISerialKeyGenerator keyGenerator = keyGeneratorManager.getSerialKeyGenerator(SequenceKey.PAYMENT_ID);
+        String paymentId = keyGenerator.nextSerialNo(new PaymentDatedIdStrategy(trade.getType()));
+        AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount());
+        IFundTransaction feeTransaction = merChannel.openTransaction(TradeType.CANCEL.getCode(), now);
+        fees.forEach(fee ->
+            feeTransaction.outgo(fee.getAmount(), fee.getType(), fee.getTypeName())
+        );
+        accountChannelService.submit(feeTransaction);
+
+        // 处理客户收款
+        AccountFund fund = null;
+        if (payment.getChannelId() == ChannelType.ACCOUNT.getCode()) {
+            AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId());
+            IFundTransaction transaction = channel.openTransaction(TradeType.CANCEL.getCode(), now);
+            fees.forEach(fee ->
+                transaction.income(fee.getAmount(), fee.getType(), fee.getTypeName())
+            );
+            fund = accountChannelService.submit(transaction);
+        }
+
+        RefundPayment refund = RefundPayment.builder().paymentId(paymentId).type(TradeType.CANCEL.getCode())
+            .tradeId(trade.getTradeId()).tradeType(trade.getType()).amount(totalFees).fee(0L)
+            .state(TradeState.SUCCESS.getCode()).description(null).version(0).createdTime(now).build();
+        refundPaymentDao.insertRefundPayment(refund);
+        // 撤销支付记录
+        PaymentStateDto paymentState = PaymentStateDto.of(payment.getPaymentId(), PaymentState.CANCELED.getCode(),
+            payment.getVersion(), now);
+        if (tradePaymentDao.compareAndSetState(paymentState) == 0) {
+            throw new TradePaymentException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统忙，请稍后再试");
+        }
+        // 撤销交易订单
+        TradeStateDto tradeState = TradeStateDto.of(trade.getTradeId(), TradeState.CANCELED.getCode(), trade.getVersion(), now);
+        if (tradeOrderDao.compareAndSetState(tradeState) == 0) {
+            throw new TradePaymentException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统忙，请稍后再试");
+        }
+        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, fund);
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.diligrp.xtrade.upay.boss.util;
 
-public class Constants {
+public final class Constants {
     public final static String PARAM_SERVICE = "service";
 
     public final static String PARAM_APPID = "appid";

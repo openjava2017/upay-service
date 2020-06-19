@@ -1,6 +1,7 @@
 package com.diligrp.xtrade.upay.trade.service.impl;
 
-import com.diligrp.xtrade.upay.channel.domain.*;
+import com.diligrp.xtrade.upay.channel.domain.AccountChannel;
+import com.diligrp.xtrade.upay.channel.domain.IFundTransaction;
 import com.diligrp.xtrade.upay.channel.service.IAccountChannelService;
 import com.diligrp.xtrade.upay.channel.type.ChannelType;
 import com.diligrp.xtrade.upay.core.ErrorCode;
@@ -8,7 +9,11 @@ import com.diligrp.xtrade.upay.core.model.AccountFund;
 import com.diligrp.xtrade.upay.trade.dao.IPaymentFeeDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradeOrderDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradePaymentDao;
-import com.diligrp.xtrade.upay.trade.domain.*;
+import com.diligrp.xtrade.upay.trade.domain.Fee;
+import com.diligrp.xtrade.upay.trade.domain.MerchantPermit;
+import com.diligrp.xtrade.upay.trade.domain.Payment;
+import com.diligrp.xtrade.upay.trade.domain.PaymentResult;
+import com.diligrp.xtrade.upay.trade.domain.TradeStateDto;
 import com.diligrp.xtrade.upay.trade.exception.TradePaymentException;
 import com.diligrp.xtrade.upay.trade.model.PaymentFee;
 import com.diligrp.xtrade.upay.trade.model.TradeOrder;
@@ -48,7 +53,7 @@ public class DepositPaymentServiceImpl implements IPaymentService {
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public PaymentResult commit(TradeOrder trade, Payment payment) {
         if (!ChannelType.forDeposit(payment.getChannelId())) {
-            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "不支持该渠道进行账户充值");
+            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "不支持该渠道进行充值业务");
         }
         if (!trade.getAccountId().equals(payment.getAccountId())) {
             throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "充值账号不一致");
@@ -97,7 +102,7 @@ public class DepositPaymentServiceImpl implements IPaymentService {
             paymentFeeDao.insertPaymentFees(paymentFeeDos);
         }
 
-        return PaymentResult.of(paymentId, TradeState.SUCCESS.getCode(), fund);
+        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, fund);
     }
 
     private String tradeName(int channelType) {

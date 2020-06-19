@@ -31,10 +31,21 @@
         SELECT * FROM upay_trade_payment WHERE payment_id = #{paymentId}
     </select>
 
+    <select id="findTradePayments" parameterType="string" resultMap="TradePaymentMap">
+        SELECT * FROM upay_trade_payment WHERE trade_id = #{tradeId} ORDER BY ID
+    </select>
+
+    <select id="findOneTradePayment" parameterType="string" resultMap="TradePaymentMap">
+        SELECT * FROM upay_trade_payment WHERE trade_id = #{tradeId} ORDER BY ID DESC LIMIT 1
+    </select>
+
     <update id="compareAndSetState" parameterType="com.diligrp.xtrade.upay.trade.domain.PaymentStateDto">
         UPDATE upay_trade_payment SET version = version + 1
         <if test="amount != null">
             , amount = #{amount}
+        </if>
+        <if test="fee != null">
+            , fee = #{fee}
         </if>
         <if test="state != null">
             , state = #{state}

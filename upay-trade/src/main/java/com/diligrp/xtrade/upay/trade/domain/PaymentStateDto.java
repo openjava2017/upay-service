@@ -7,6 +7,8 @@ public class PaymentStateDto {
     private String paymentId;
     // 金额 - 预支付交易或发生退款时需要更新实际付款金额
     private Long amount;
+    // 费用
+    private Long fee;
     // 状态
     private Integer state;
     // 数据版本
@@ -19,9 +21,14 @@ public class PaymentStateDto {
     }
 
     public static PaymentStateDto of(String paymentId, Long amount, Integer state, Integer version, LocalDateTime modifiedTime) {
+        return PaymentStateDto.of(paymentId, amount, null, state, version, modifiedTime);
+    }
+
+    public static PaymentStateDto of(String paymentId, Long amount, Long fee, Integer state, Integer version, LocalDateTime modifiedTime) {
         PaymentStateDto paymentState = new PaymentStateDto();
         paymentState.setPaymentId(paymentId);
         paymentState.setAmount(amount);
+        paymentState.setFee(fee);
         paymentState.setState(state);
         paymentState.setVersion(version);
         paymentState.setModifiedTime(modifiedTime);
@@ -42,6 +49,14 @@ public class PaymentStateDto {
 
     public void setAmount(Long amount) {
         this.amount = amount;
+    }
+
+    public Long getFee() {
+        return fee;
+    }
+
+    public void setFee(Long fee) {
+        this.fee = fee;
     }
 
     public Integer getState() {

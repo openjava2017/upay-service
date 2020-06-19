@@ -42,7 +42,7 @@ public class PredepositPaymentServiceImpl implements IPaymentService {
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public PaymentResult commit(TradeOrder trade, Payment payment) {
         if (!ChannelType.forDeposit(payment.getChannelId())) {
-            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "不支持该渠道进行账户充值");
+            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "不支持该渠道进行预充值业务");
         }
         if (!trade.getAccountId().equals(payment.getAccountId())) {
             throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "充值账号不一致");
@@ -67,7 +67,7 @@ public class PredepositPaymentServiceImpl implements IPaymentService {
             .description(tradeName(payment.getChannelId())).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
 
-        return PaymentResult.of(paymentId, TradeState.SUCCESS.getCode(), fund);
+        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, fund);
     }
 
     private String tradeName(int channelType) {
