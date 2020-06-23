@@ -31,6 +31,8 @@ CREATE TABLE `upay_merchant` (
   `address` VARCHAR(128) COMMENT '商户地址',
   `contact` VARCHAR(50) COMMENT '联系人',
   `mobile` VARCHAR(20) COMMENT '手机号',
+  `private_key` VARCHAR(512) COMMENT '商户私钥',
+  `public_key` VARCHAR(200) COMMENT '商户公钥',
   `state` TINYINT UNSIGNED NOT NULL COMMENT '商户状态',
   `created_time` DATETIME COMMENT '创建时间',
   `modified_time` DATETIME COMMENT '修改时间',
@@ -49,7 +51,8 @@ CREATE TABLE `upay_application` (
   `mch_id` BIGINT NOT NULL COMMENT '商户ID',
   `name` VARCHAR(80) NOT NULL COMMENT '应用名称',
   `access_token` VARCHAR(40) COMMENT '授权Token',
-  `secret_key` VARCHAR(250) COMMENT '安全密钥-接口使用',
+  `private_key` VARCHAR(512) COMMENT '应用私钥',
+  `public_key` VARCHAR(200) COMMENT '应用公钥',
   `created_time` DATETIME COMMENT '创建时间',
   `modified_time` DATETIME COMMENT '修改时间',
   PRIMARY KEY (`id`),
@@ -216,7 +219,7 @@ CREATE TABLE `upay_trade_payment` (
 -- 说明：退款类型包括交易撤销、交易退款和交易冲正，都是对原交易记录的资金逆向操作；
 -- 交易退款与交易支付相同都是对交易订单进行的资金操作，一个是支付一个是退款；
 -- --------------------------------------------------------------------
-DROP TABLE IF EXISTS `upay_trade_refund`;
+DROP TABLE IF EXISTS `upay_refund_payment`;
 CREATE TABLE `upay_refund_payment` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `payment_id` VARCHAR(40) NOT NULL COMMENT '退款支付ID',

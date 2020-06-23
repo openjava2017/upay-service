@@ -2,6 +2,8 @@ package com.diligrp.xtrade.upay.core.model;
 
 import com.diligrp.xtrade.shared.domain.BaseDo;
 
+import java.time.LocalDateTime;
+
 /**
  * 接入应用数据模型
  */
@@ -14,8 +16,10 @@ public class Application extends BaseDo {
     private String name;
     // 授权Token
     private String accessToken;
-    // 安全密钥-接口使用
-    private String secretKey;
+    // 应用私钥
+    private String privateKey;
+    // 应用公钥
+    private String publicKey;
 
     public Long getAppId() {
         return appId;
@@ -49,11 +53,64 @@ public class Application extends BaseDo {
         this.accessToken = accessToken;
     }
 
-    public String getSecretKey() {
-        return secretKey;
+    public String getPrivateKey() {
+        return privateKey;
     }
 
-    public void setSecretKey(String secretKey) {
-        this.secretKey = secretKey;
+    public void setPrivateKey(String privateKey) {
+        this.privateKey = privateKey;
+    }
+
+    public String getPublicKey() {
+        return publicKey;
+    }
+
+    public void setPublicKey(String publicKey) {
+        this.publicKey = publicKey;
+    }
+
+    public static Builder builder() {
+        return new Application().new Builder();
+    }
+
+    public class Builder {
+        public Builder appId(Long appId) {
+            Application.this.appId = appId;
+            return this;
+        }
+
+        public Builder mchId(Long mchId) {
+            Application.this.mchId = mchId;
+            return this;
+        }
+
+        public Builder name(String name) {
+            Application.this.name = name;
+            return this;
+        }
+
+        public Builder accessToken(String accessToken) {
+            Application.this.accessToken = accessToken;
+            return this;
+        }
+
+        public Builder privateKey(String privateKey) {
+            Application.this.privateKey = privateKey;
+            return this;
+        }
+
+        public Builder publicKey(String publicKey) {
+            Application.this.publicKey = publicKey;
+            return this;
+        }
+
+        public Builder createdTime(LocalDateTime createdTime) {
+            Application.this.createdTime = createdTime;
+            return this;
+        }
+
+        public Application build() {
+            return Application.this;
+        }
     }
 }

@@ -2,6 +2,8 @@ package com.diligrp.xtrade.upay.core.model;
 
 import com.diligrp.xtrade.shared.domain.BaseDo;
 
+import java.time.LocalDateTime;
+
 /**
  * 接入商户数据模型
  */
@@ -24,6 +26,10 @@ public class Merchant extends BaseDo {
     private String contact;
     // 手机号
     private String mobile;
+    // 商户私钥
+    private String privateKey;
+    // 商户公钥
+    private String publicKey;
     // 商户状态
     private Integer state;
 
@@ -99,11 +105,102 @@ public class Merchant extends BaseDo {
         this.mobile = mobile;
     }
 
+    public String getPrivateKey() {
+        return privateKey;
+    }
+
+    public void setPrivateKey(String privateKey) {
+        this.privateKey = privateKey;
+    }
+
+    public String getPublicKey() {
+        return publicKey;
+    }
+
+    public void setPublicKey(String publicKey) {
+        this.publicKey = publicKey;
+    }
+
     public Integer getState() {
         return state;
     }
 
     public void setState(Integer state) {
         this.state = state;
+    }
+
+    public static Builder builder() {
+        return new Merchant().new Builder();
+    }
+
+    public class Builder {
+        public Builder mchId(Long mchId) {
+            Merchant.this.mchId = mchId;
+            return this;
+        }
+
+        public Builder code(String code) {
+            Merchant.this.code = code;
+            return this;
+        }
+
+        public Builder name(String name) {
+            Merchant.this.name = name;
+            return this;
+        }
+
+        public Builder profitAccount(Long profitAccount) {
+            Merchant.this.profitAccount = profitAccount;
+            return this;
+        }
+
+        public Builder vouchAccount(Long vouchAccount) {
+            Merchant.this.vouchAccount = vouchAccount;
+            return this;
+        }
+
+        public Builder pledgeAccount(Long pledgeAccount) {
+            Merchant.this.pledgeAccount = pledgeAccount;
+            return this;
+        }
+
+        public Builder address(String address) {
+            Merchant.this.address = address;
+            return this;
+        }
+
+        public Builder contact(String contact) {
+            Merchant.this.contact = contact;
+            return this;
+        }
+
+        public Builder mobile(String mobile) {
+            Merchant.this.mobile = mobile;
+            return this;
+        }
+
+        public Builder privateKey(String privateKey) {
+            Merchant.this.privateKey = privateKey;
+            return this;
+        }
+
+        public Builder publicKey(String publicKey) {
+            Merchant.this.publicKey = publicKey;
+            return this;
+        }
+
+        public Builder state(Integer state) {
+            Merchant.this.state = state;
+            return this;
+        }
+
+        public Builder createdTime(LocalDateTime createdTime) {
+            Merchant.this.createdTime = createdTime;
+            return this;
+        }
+
+        public Merchant build() {
+            return Merchant.this;
+        }
     }
 }

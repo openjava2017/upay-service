@@ -10,6 +10,9 @@ import com.diligrp.xtrade.upay.channel.type.FrozenType;
 
 import javax.annotation.Resource;
 
+/**
+ * 资金服务组件
+ */
 @CallableComponent(id = "payment.fund.service")
 public class FundServiceComponent {
 

@@ -9,6 +9,7 @@ import com.diligrp.xtrade.upay.channel.service.IAccountChannelService;
 import com.diligrp.xtrade.upay.channel.type.ChannelType;
 import com.diligrp.xtrade.upay.core.ErrorCode;
 import com.diligrp.xtrade.upay.core.dao.IMerchantDao;
+import com.diligrp.xtrade.upay.core.domain.MerchantPermit;
 import com.diligrp.xtrade.upay.core.model.AccountFund;
 import com.diligrp.xtrade.upay.core.type.SequenceKey;
 import com.diligrp.xtrade.upay.trade.dao.IPaymentFeeDao;
@@ -16,7 +17,6 @@ import com.diligrp.xtrade.upay.trade.dao.IRefundPaymentDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradeOrderDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradePaymentDao;
 import com.diligrp.xtrade.upay.trade.domain.Fee;
-import com.diligrp.xtrade.upay.trade.domain.MerchantPermit;
 import com.diligrp.xtrade.upay.trade.domain.Payment;
 import com.diligrp.xtrade.upay.trade.domain.PaymentResult;
 import com.diligrp.xtrade.upay.trade.domain.PaymentStateDto;
@@ -46,9 +46,6 @@ import java.util.stream.Collectors;
 public class FeePaymentServiceImpl implements IPaymentService {
 
     @Resource
-    private IAccountChannelService accountChannelService;
-
-    @Resource
     private ITradePaymentDao tradePaymentDao;
 
     @Resource
@@ -62,6 +59,9 @@ public class FeePaymentServiceImpl implements IPaymentService {
 
     @Resource
     private IMerchantDao merchantDao;
+
+    @Resource
+    private IAccountChannelService accountChannelService;
 
     @Resource
     private KeyGeneratorManager keyGeneratorManager;
@@ -81,13 +81,15 @@ public class FeePaymentServiceImpl implements IPaymentService {
         List<Fee> fees = feesOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "无收费信息"));
         long totalFee = fees.stream().mapToLong(Fee::getAmount).sum();
         if (totalFee != payment.getAmount()) {
-            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "缴费金额与申请金额不一致");
+            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "实际缴费金额与申请缴费金额不一致");
         }
 
         // 处理账户余额缴费
-        String paymentId = trade.getTradeId();
-        LocalDateTime now = LocalDateTime.now();
         AccountFund fund = null;
+        LocalDateTime now = LocalDateTime.now();
+        accountChannelService.checkTradePermission(payment.getAccountId(), payment.getPassword(), 5);
+        ISerialKeyGenerator keyGenerator = keyGeneratorManager.getSerialKeyGenerator(SequenceKey.PAYMENT_ID);
+        String paymentId = keyGenerator.nextSerialNo(new PaymentDatedIdStrategy(trade.getType()));
         if (payment.getChannelId() == ChannelType.ACCOUNT.getCode()) {
             AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId());
             IFundTransaction transaction = channel.openTransaction(trade.getType(), now);
@@ -134,6 +136,10 @@ public class FeePaymentServiceImpl implements IPaymentService {
         if (trade.getState() != TradeState.SUCCESS.getCode()) {
             throw new TradePaymentException(ErrorCode.OPERATION_NOT_ALLOWED, "无效的交易状态，不能进行撤销操作");
         }
+        if (!trade.getAccountId().equals(cancel.getAccountId())) {
+            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "退款账号不一致");
+        }
+
         // "缴费"不存在组合支付的情况，因此一个交易订单只对应一条支付记录
         Optional<TradePayment> paymentOpt = tradePaymentDao.findOneTradePayment(trade.getTradeId());
         TradePayment payment = paymentOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.OBJECT_NOT_FOUND, "支付记录不存在"));
@@ -143,11 +149,12 @@ public class FeePaymentServiceImpl implements IPaymentService {
             throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "撤销金额与支付金额不一致");
         }
 
-        // 获取交易订单中的商户收益账号信息，并处理商户退款
+        // 验证退款方密码, 获取交易订单中的商户收益账号信息，并处理商户退款
         LocalDateTime now = LocalDateTime.now();
+        accountChannelService.checkTradePermission(trade.getAccountId(), cancel.getPassword(), 5);
         MerchantPermit merchant = merchantDao.findMerchantById(trade.getMchId()).map(mer -> MerchantPermit.of(
-            mer.getMchId(), mer.getProfitAccount(), mer.getVouchAccount(), mer.getPledgeAccount()))
-            .orElseThrow(() -> new ServiceAccessException(ErrorCode.OBJECT_NOT_FOUND, "商户信息未注册"));
+            mer.getMchId(), mer.getProfitAccount(), mer.getVouchAccount(), mer.getPledgeAccount(), mer.getPrivateKey(),
+            mer.getPublicKey())).orElseThrow(() -> new ServiceAccessException(ErrorCode.OBJECT_NOT_FOUND, "商户信息未注册"));
         ISerialKeyGenerator keyGenerator = keyGeneratorManager.getSerialKeyGenerator(SequenceKey.PAYMENT_ID);
         String paymentId = keyGenerator.nextSerialNo(new PaymentDatedIdStrategy(trade.getType()));
         AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount());

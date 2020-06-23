@@ -36,7 +36,7 @@
     </select>
 
     <select id="findOneTradePayment" parameterType="string" resultMap="TradePaymentMap">
-        SELECT * FROM upay_trade_payment WHERE trade_id = #{tradeId} ORDER BY ID DESC LIMIT 1
+        SELECT * FROM upay_trade_payment WHERE trade_id = #{tradeId} ORDER BY ID
     </select>
 
     <update id="compareAndSetState" parameterType="com.diligrp.xtrade.upay.trade.domain.PaymentStateDto">

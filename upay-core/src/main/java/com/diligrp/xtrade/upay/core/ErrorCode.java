@@ -14,6 +14,8 @@ public class ErrorCode {
     public static final int DATA_CONCURRENT_UPDATED = 500003;
     // 对象不存在
     public static final int OBJECT_NOT_FOUND = 500004;
+    // 对象已存在
+    public static final int OBJECT_ALREADY_EXISTS = 500005;
     // 服务不存在
     public static final int SERVICE_NOT_AVAILABLE = 501001;
     // 访问未授权

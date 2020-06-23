@@ -1,6 +1,6 @@
 package com.diligrp.xtrade.upay.trade.service;
 
-import com.diligrp.xtrade.upay.trade.domain.ApplicationPermit;
+import com.diligrp.xtrade.upay.core.domain.ApplicationPermit;
 import com.diligrp.xtrade.upay.trade.domain.ConfirmRequest;
 import com.diligrp.xtrade.upay.trade.domain.PaymentRequest;
 import com.diligrp.xtrade.upay.trade.domain.PaymentResult;
@@ -12,7 +12,7 @@ public interface IPaymentPlatformService {
 
     PaymentResult commit(ApplicationPermit application, PaymentRequest request);
 
-    PaymentResult cancel(ApplicationPermit application, RefundRequest request);
-
     PaymentResult confirm(ApplicationPermit application, ConfirmRequest request);
+
+    PaymentResult cancel(ApplicationPermit application, RefundRequest request);
 }

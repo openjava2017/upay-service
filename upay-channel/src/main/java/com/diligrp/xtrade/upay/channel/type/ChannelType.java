@@ -66,6 +66,13 @@ public enum ChannelType implements IEnumType {
     }
 
     /**
+     * 判断渠道是否可用于"即时交易", "预授权交易"和"转账"业务
+     */
+    public static boolean forTrade(int code) {
+        return code == ACCOUNT.getCode();
+    }
+
+    /**
      * 判断渠道是否可用于"预授权缴费"业务
      */
     public static boolean forPreAuthFee(int code) {

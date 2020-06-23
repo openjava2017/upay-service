@@ -7,7 +7,7 @@ import com.diligrp.xtrade.shared.util.RandomUtils;
 import java.time.LocalDate;
 
 /**
- * 交易号生成策略，生成规则：年月日+"0"+两位业务类型码+两位随机码+至少四位顺序数
+ * 交易号生成策略，生成规则：年月日+"0"+两位业务类型码+至少四位顺序数+两位随机码
  */
 public class TradeDatedIdStrategy implements ISerialKeyGenerator.IDatedIdStrategy {
 
@@ -21,7 +21,7 @@ public class TradeDatedIdStrategy implements ISerialKeyGenerator.IDatedIdStrateg
     public String id(LocalDate date, long sequence) {
         StringBuilder builder = new StringBuilder();
         String dateFormat = DateUtils.formatDate(date, DateUtils.YYYYMMDD);
-        builder.append(dateFormat).append('0').append(type).append(RandomUtils.randomNumber(2));
+        builder.append(dateFormat).append('0').append(type);
         if (sequence < 10) {
             builder.append("000").append(sequence);
         } else if (sequence < 100) {
@@ -31,6 +31,7 @@ public class TradeDatedIdStrategy implements ISerialKeyGenerator.IDatedIdStrateg
         } else {
             builder.append(sequence);
         }
+        builder.append(RandomUtils.randomNumber(2));
 
         return builder.toString();
     }

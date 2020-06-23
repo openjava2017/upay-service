@@ -1,16 +1,19 @@
 package com.diligrp.xtrade.upay.trade.service.impl;
 
+import com.diligrp.xtrade.shared.sequence.ISerialKeyGenerator;
+import com.diligrp.xtrade.shared.sequence.KeyGeneratorManager;
 import com.diligrp.xtrade.upay.channel.domain.AccountChannel;
 import com.diligrp.xtrade.upay.channel.domain.IFundTransaction;
 import com.diligrp.xtrade.upay.channel.service.IAccountChannelService;
 import com.diligrp.xtrade.upay.channel.type.ChannelType;
 import com.diligrp.xtrade.upay.core.ErrorCode;
+import com.diligrp.xtrade.upay.core.domain.MerchantPermit;
 import com.diligrp.xtrade.upay.core.model.AccountFund;
+import com.diligrp.xtrade.upay.core.type.SequenceKey;
 import com.diligrp.xtrade.upay.trade.dao.IPaymentFeeDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradeOrderDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradePaymentDao;
 import com.diligrp.xtrade.upay.trade.domain.Fee;
-import com.diligrp.xtrade.upay.trade.domain.MerchantPermit;
 import com.diligrp.xtrade.upay.trade.domain.Payment;
 import com.diligrp.xtrade.upay.trade.domain.PaymentResult;
 import com.diligrp.xtrade.upay.trade.domain.TradeStateDto;
@@ -23,6 +26,7 @@ import com.diligrp.xtrade.upay.trade.type.FundType;
 import com.diligrp.xtrade.upay.trade.type.PaymentState;
 import com.diligrp.xtrade.upay.trade.type.TradeState;
 import com.diligrp.xtrade.upay.trade.type.TradeType;
+import com.diligrp.xtrade.upay.trade.util.PaymentDatedIdStrategy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,9 +42,6 @@ import java.util.stream.Collectors;
 public class DepositPaymentServiceImpl implements IPaymentService {
 
     @Resource
-    private IAccountChannelService accountChannelService;
-
-    @Resource
     private ITradePaymentDao tradePaymentDao;
 
     @Resource
@@ -48,6 +49,12 @@ public class DepositPaymentServiceImpl implements IPaymentService {
 
     @Resource
     private IPaymentFeeDao paymentFeeDao;
+
+    @Resource
+    private IAccountChannelService accountChannelService;
+
+    @Resource
+    private KeyGeneratorManager keyGeneratorManager;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
@@ -63,8 +70,10 @@ public class DepositPaymentServiceImpl implements IPaymentService {
         List<Fee> fees = feesOpt.orElseGet(Collections::emptyList);
 
         // 处理个人充值
-        String paymentId = trade.getTradeId();
         LocalDateTime now = LocalDateTime.now();
+        accountChannelService.checkTradePermission(payment.getAccountId());
+        ISerialKeyGenerator keyGenerator = keyGeneratorManager.getSerialKeyGenerator(SequenceKey.PAYMENT_ID);
+        String paymentId = keyGenerator.nextSerialNo(new PaymentDatedIdStrategy(trade.getType()));
         AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId());
         IFundTransaction transaction = channel.openTransaction(trade.getType(), now);
         transaction.income(trade.getAmount(), FundType.FUND.getCode(), FundType.FUND.getName());
@@ -110,8 +119,10 @@ public class DepositPaymentServiceImpl implements IPaymentService {
             return "现金充值";
         } else if (channelType == ChannelType.POS.getCode()) {
             return "POS充值";
+        } else if (channelType == ChannelType.E_BANK.getCode()) {
+            return "网银充值";
         }
-        return null;
+        return supportType().getName();
     }
 
     @Override

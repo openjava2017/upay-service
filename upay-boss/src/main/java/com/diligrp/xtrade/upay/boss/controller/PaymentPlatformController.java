@@ -9,10 +9,10 @@ import com.diligrp.xtrade.shared.sapi.ICallableServiceManager;
 import com.diligrp.xtrade.shared.util.AssertUtils;
 import com.diligrp.xtrade.shared.util.ObjectUtils;
 import com.diligrp.xtrade.upay.boss.util.Constants;
-import com.diligrp.xtrade.upay.core.exception.PaymentServiceException;
 import com.diligrp.xtrade.upay.core.ErrorCode;
-import com.diligrp.xtrade.upay.trade.domain.ApplicationPermit;
-import com.diligrp.xtrade.upay.trade.service.IAccessPermitService;
+import com.diligrp.xtrade.upay.core.domain.ApplicationPermit;
+import com.diligrp.xtrade.upay.core.exception.PaymentServiceException;
+import com.diligrp.xtrade.upay.core.service.IAccessPermitService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -51,11 +51,13 @@ public class PaymentPlatformController {
             String signature = context.getString(Constants.PARAM_SIGNATURE);
             String charset = context.getString(Constants.PARAM_CHARSET);
             MessageEnvelop envelop = MessageEnvelop.of(appId, service, accessToken, payload, signature, charset);
-
-            ApplicationPermit application = checkAccessPermission(context, envelop);
-            // 如果应用配置了调用方的公钥信息，则进行数据验签
-            if (ObjectUtils.isNotEmpty(application.getSecretKey())) {
-                envelop.unpackEnvelop(application.getSecretKey());
+            // 是否忽略访问权限检查，商户和应用注册将忽略权限检查
+            if (!ignoreAccessPermission(envelop)) {
+                ApplicationPermit application = checkAccessPermission(context, envelop);
+                // 如果应用配置了调用方的公钥信息，则进行数据验签
+                if (Constants.DATA_VERIFY_ENABLED && ObjectUtils.isNotEmpty(application.getPublicKey())) {
+                    envelop.unpackEnvelop(application.getPublicKey());
+                }
             }
             // TODO:如果设置了商户的私钥，则还需对数据进行签名
             return callableServiceManager.callService(context, envelop);
@@ -86,6 +88,10 @@ public class PaymentPlatformController {
         }
         context.put(ApplicationPermit.class.getName(), application);
         return application;
+    }
+
+    private boolean ignoreAccessPermission(MessageEnvelop envelop) {
+        return envelop.getRecipient().startsWith(Constants.IGNORE_SERVICE_PREFIX);
     }
 
     private String httpBody(HttpServletRequest request) {

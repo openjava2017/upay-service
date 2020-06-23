@@ -5,11 +5,21 @@ import com.diligrp.xtrade.shared.sequence.KeyGeneratorManager;
 import com.diligrp.xtrade.upay.channel.type.ChannelType;
 import com.diligrp.xtrade.upay.core.ErrorCode;
 import com.diligrp.xtrade.upay.core.dao.IFundAccountDao;
+import com.diligrp.xtrade.upay.core.domain.ApplicationPermit;
+import com.diligrp.xtrade.upay.core.domain.MerchantPermit;
 import com.diligrp.xtrade.upay.core.exception.FundAccountException;
 import com.diligrp.xtrade.upay.core.model.FundAccount;
 import com.diligrp.xtrade.upay.core.type.SequenceKey;
 import com.diligrp.xtrade.upay.trade.dao.ITradeOrderDao;
-import com.diligrp.xtrade.upay.trade.domain.*;
+import com.diligrp.xtrade.upay.trade.domain.Confirm;
+import com.diligrp.xtrade.upay.trade.domain.ConfirmRequest;
+import com.diligrp.xtrade.upay.trade.domain.Fee;
+import com.diligrp.xtrade.upay.trade.domain.Payment;
+import com.diligrp.xtrade.upay.trade.domain.PaymentRequest;
+import com.diligrp.xtrade.upay.trade.domain.PaymentResult;
+import com.diligrp.xtrade.upay.trade.domain.Refund;
+import com.diligrp.xtrade.upay.trade.domain.RefundRequest;
+import com.diligrp.xtrade.upay.trade.domain.TradeRequest;
 import com.diligrp.xtrade.upay.trade.exception.TradePaymentException;
 import com.diligrp.xtrade.upay.trade.model.TradeOrder;
 import com.diligrp.xtrade.upay.trade.service.IPaymentPlatformService;
@@ -68,8 +78,8 @@ public class PaymentPlatformServiceImpl implements IPaymentPlatformService, Bean
         Optional<ChannelType> channelType = ChannelType.getType(request.getChannelId());
         channelType.orElseThrow(() -> new TradePaymentException(ErrorCode.CHANNEL_NOT_SUPPORTED, "不支持的支付渠道"));
 
-        Optional<TradeOrder> orderOpt = tradeOrderDao.findTradeOrderById(request.getTradeId());
-        TradeOrder trade = orderOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.TRADE_NOT_FOUND, "交易不存在"));
+        Optional<TradeOrder> tradeOpt = tradeOrderDao.findTradeOrderById(request.getTradeId());
+        TradeOrder trade = tradeOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.TRADE_NOT_FOUND, "交易不存在"));
         if (trade.getState() != TradeState.PENDING.getCode()) {
             throw new TradePaymentException(ErrorCode.INVALID_TRADE_STATE, "无效的交易状态");
         }
@@ -94,27 +104,10 @@ public class PaymentPlatformServiceImpl implements IPaymentPlatformService, Bean
     }
 
     @Override
-    public PaymentResult cancel(ApplicationPermit application, RefundRequest request) {
-        Optional<TradeOrder> tradeOpt = tradeOrderDao.findTradeOrderById(request.getTradeId());
-        TradeOrder trade = tradeOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.TRADE_NOT_FOUND, "交易不存在"));
-        if (TradeState.forCancel(trade.getState())) {
-            throw new TradePaymentException(ErrorCode.INVALID_TRADE_STATE, "无效的交易状态，不能撤销交易");
-        }
-        Optional<TradeType> typeOpt = TradeType.getType(trade.getType());
-        TradeType tradeType = typeOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.TRADE_NOT_SUPPORTED, "不支持的交易类型"));
-        Optional<IPaymentService> serviceOpt = tradeService(tradeType);
-        IPaymentService service = serviceOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.TRADE_NOT_SUPPORTED, "不支持的交易类型"));
-
-        Refund cancel = Refund.of(trade.getAmount(), request.getPassword());
-        cancel.put(MerchantPermit.class.getName(), application.getMerchant());
-        return service.cancel(trade, cancel);
-    }
-
-    @Override
     public PaymentResult confirm(ApplicationPermit application, ConfirmRequest request) {
         Optional<TradeOrder> tradeOpt = tradeOrderDao.findTradeOrderById(request.getTradeId());
         TradeOrder trade = tradeOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.TRADE_NOT_FOUND, "交易不存在"));
-        if (TradeState.forConfirm(trade.getState())) {
+        if (!TradeState.forConfirm(trade.getState())) {
             throw new TradePaymentException(ErrorCode.INVALID_TRADE_STATE, "无效的交易状态，不能确认消费");
         }
         Optional<TradeType> typeOpt = TradeType.getType(trade.getType());
@@ -122,10 +115,27 @@ public class PaymentPlatformServiceImpl implements IPaymentPlatformService, Bean
         Optional<IPaymentService> serviceOpt = tradeService(tradeType);
         IPaymentService service = serviceOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.TRADE_NOT_SUPPORTED, "不支持的交易类型"));
 
-        Confirm confirm = Confirm.of(trade.getAmount(), request.getPassword());
+        Confirm confirm = Confirm.of(request.getAccountId(), request.getAmount(), request.getPassword());
         confirm.put(MerchantPermit.class.getName(), application.getMerchant());
         request.fees().ifPresent(fees -> confirm.put(Fee.class.getName(), fees));
         return service.confirm(trade, confirm);
+    }
+
+    @Override
+    public PaymentResult cancel(ApplicationPermit application, RefundRequest request) {
+        Optional<TradeOrder> tradeOpt = tradeOrderDao.findTradeOrderById(request.getTradeId());
+        TradeOrder trade = tradeOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.TRADE_NOT_FOUND, "交易不存在"));
+        if (!TradeState.forCancel(trade.getState())) {
+            throw new TradePaymentException(ErrorCode.INVALID_TRADE_STATE, "无效的交易状态，不能撤销交易");
+        }
+        Optional<TradeType> typeOpt = TradeType.getType(trade.getType());
+        TradeType tradeType = typeOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.TRADE_NOT_SUPPORTED, "不支持的交易类型"));
+        Optional<IPaymentService> serviceOpt = tradeService(tradeType);
+        IPaymentService service = serviceOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.TRADE_NOT_SUPPORTED, "不支持的交易类型"));
+
+        Refund cancel = Refund.of(request.getAccountId(), trade.getAmount(), request.getPassword());
+        cancel.put(MerchantPermit.class.getName(), application.getMerchant());
+        return service.cancel(trade, cancel);
     }
 
     @Override

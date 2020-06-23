@@ -15,6 +15,7 @@ import com.diligrp.xtrade.upay.channel.type.FrozenType;
 import com.diligrp.xtrade.upay.core.ErrorCode;
 import com.diligrp.xtrade.upay.core.dao.IFundAccountDao;
 import com.diligrp.xtrade.upay.core.dao.IMerchantDao;
+import com.diligrp.xtrade.upay.core.domain.MerchantPermit;
 import com.diligrp.xtrade.upay.core.model.AccountFund;
 import com.diligrp.xtrade.upay.core.model.FundAccount;
 import com.diligrp.xtrade.upay.core.type.SequenceKey;
@@ -23,7 +24,6 @@ import com.diligrp.xtrade.upay.trade.dao.ITradeOrderDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradePaymentDao;
 import com.diligrp.xtrade.upay.trade.domain.Confirm;
 import com.diligrp.xtrade.upay.trade.domain.Fee;
-import com.diligrp.xtrade.upay.trade.domain.MerchantPermit;
 import com.diligrp.xtrade.upay.trade.domain.Payment;
 import com.diligrp.xtrade.upay.trade.domain.PaymentResult;
 import com.diligrp.xtrade.upay.trade.domain.PaymentStateDto;
@@ -34,7 +34,6 @@ import com.diligrp.xtrade.upay.trade.model.PaymentFee;
 import com.diligrp.xtrade.upay.trade.model.TradeOrder;
 import com.diligrp.xtrade.upay.trade.model.TradePayment;
 import com.diligrp.xtrade.upay.trade.service.IPaymentService;
-import com.diligrp.xtrade.upay.trade.type.FundType;
 import com.diligrp.xtrade.upay.trade.type.PaymentState;
 import com.diligrp.xtrade.upay.trade.type.TradeState;
 import com.diligrp.xtrade.upay.trade.type.TradeType;
@@ -57,13 +56,7 @@ import java.util.stream.Collectors;
 public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements IPaymentService {
 
     @Resource
-    private IAccountChannelService accountChannelService;
-
-    @Resource
     private IFundAccountDao fundAccountDao;
-
-    @Resource
-    private KeyGeneratorManager keyGeneratorManager;
 
     @Resource
     private ITradePaymentDao tradePaymentDao;
@@ -80,27 +73,33 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
     @Resource
     private IMerchantDao merchantDao;
 
+    @Resource
+    private IAccountChannelService accountChannelService;
+
+    @Resource
+    private KeyGeneratorManager keyGeneratorManager;
+
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public PaymentResult commit(TradeOrder trade, Payment payment) {
-        if (ChannelType.forPreAuthFee(payment.getChannelId())) {
-            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "不支持该渠道进行交易冻结业务");
+        if (!ChannelType.forPreAuthFee(payment.getChannelId())) {
+            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "不支持该渠道进行预授权缴费业务");
         }
         if (!trade.getAccountId().equals(payment.getAccountId())) {
-            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "冻结资金账号不一致");
+            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "缴费资金账号不一致");
         }
-        Optional<FundAccount> accountOpt = fundAccountDao.findFundAccountById(payment.getAccountId());
-        FundAccount account = accountOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.ACCOUNT_NOT_FOUND, "资金账号不存在"));
+        Optional<List<Fee>> feesOpt = payment.getObjects(Fee.class.getName());
+        feesOpt.ifPresent(fees -> { throw new TradePaymentException(ErrorCode.OPERATION_NOT_ALLOWED, "预授权冻结不支持收取费用"); });
 
         // 冻结资金
         LocalDateTime now = LocalDateTime.now();
-        accountChannelService.checkTradePermission(payment.getAccountId(), payment.getPassword(), 5);
+        FundAccount account = accountChannelService.checkTradePermission(payment.getAccountId(), payment.getPassword(), 5);
         ISerialKeyGenerator keyGenerator = keyGeneratorManager.getSerialKeyGenerator(SequenceKey.PAYMENT_ID);
         String paymentId = keyGenerator.nextSerialNo(new PaymentDatedIdStrategy(trade.getType()));
         AccountChannel channel = AccountChannel.of(paymentId, payment.getAccountId());
         IFundTransaction transaction = channel.openTransaction(FrozenState.FROZEN.getCode(), now);
         transaction.freeze(trade.getAmount());
-        accountChannelService.submit(transaction);
+        AccountFund fund = accountChannelService.submit(transaction);
 
         // 创建冻结资金订单
         long frozenId = keyGeneratorManager.getKeyGenerator(SequenceKey.FROZEN_ID).nextId();
@@ -116,14 +115,14 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
         if (result == 0) {
             throw new TradePaymentException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统正忙，请稍后重试");
         }
-        // 生成"处理中"支付的支付记录
+        // 生成"待处理"支付的支付记录
         TradePayment paymentDo = TradePayment.builder().paymentId(paymentId).tradeId(trade.getTradeId())
             .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
-            .amount(payment.getAmount()).fee(0L).state(PaymentState.PROCESSING.getCode())
+            .amount(payment.getAmount()).fee(0L).state(PaymentState.PENDING.getCode())
             .description(TradeType.AUTH_FEE.getName()).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
 
-        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId);
+        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, fund);
     }
 
     /**
@@ -134,8 +133,7 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
     public PaymentResult confirm(TradeOrder trade, Confirm confirm) {
         Optional<List<Fee>> feesOpt = confirm.getObjects(Fee.class.getName());
         List<Fee> fees = feesOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "无收费信息"));
-
-        // 预授权缴费业务允许实际缴费金额大于预授权金额, confirm.amount应该等于费用总和
+        // 预授权缴费业务允许实际缴费金额大于预授权金额, 确认金额confirm.amount应该等于费用总和
         long totalFee = fees.stream().mapToLong(Fee::getAmount).sum();
         if (totalFee !=  confirm.getAmount()) {
             throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "收费金额参数错误");
@@ -144,6 +142,9 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
         // "预授权缴费"不存在组合支付的情况，因此一个交易订单只对应一条支付记录
         Optional<TradePayment> paymentOpt = tradePaymentDao.findOneTradePayment(trade.getTradeId());
         TradePayment payment = paymentOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.OBJECT_NOT_FOUND, "支付记录不存在"));
+        if (!payment.getAccountId().equals(confirm.getAccountId())) {
+            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "缴费资金账号不一致");
+        }
         // 查询冻结订单
         Optional<FrozenOrder> orderOpt = frozenOrderDao.findFrozenOrderByPaymentId(payment.getPaymentId());
         FrozenOrder frozenOrder = orderOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.OBJECT_NOT_FOUND, "冻结订单不存在"));
@@ -151,12 +152,12 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
             throw new TradePaymentException(ErrorCode.OPERATION_NOT_ALLOWED, "无预授权资金记录");
         }
 
+        // 获取商户收益账号信息
         LocalDateTime now = LocalDateTime.now();
         accountChannelService.checkTradePermission(payment.getAccountId(), confirm.getPassword(), 5);
-        // 获取商户收益账号信息
         MerchantPermit merchant = merchantDao.findMerchantById(trade.getMchId()).map(mer -> MerchantPermit.of(
-            mer.getMchId(), mer.getProfitAccount(), mer.getVouchAccount(), mer.getPledgeAccount()))
-            .orElseThrow(() -> new ServiceAccessException(ErrorCode.OBJECT_NOT_FOUND, "商户信息未注册"));
+            mer.getMchId(), mer.getProfitAccount(), mer.getVouchAccount(), mer.getPledgeAccount(), mer.getPrivateKey(),
+            mer.getPublicKey())).orElseThrow(() -> new ServiceAccessException(ErrorCode.OBJECT_NOT_FOUND, "商户信息未注册"));
         // 客户账号资金解冻并缴费
         AccountChannel channel = AccountChannel.of(payment.getPaymentId(), payment.getAccountId());
         IFundTransaction transaction = channel.openTransaction(trade.getType(), now);
@@ -210,12 +211,19 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
         if (trade.getState() == TradeState.SUCCESS.getCode()) {
             return super.cancel(trade, cancel);
         }
+        if (!trade.getAccountId().equals(cancel.getAccountId())) {
+            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "退款账号不一致");
+        }
 
-        // "预授权缴费"不存在组合支付的情况，因此一个交易订单只对应一条支付记录
+        // "预授权缴费"不存在组合支付的情况, 因此一个交易订单只对应一条支付记录
         Optional<TradePayment> paymentOpt = tradePaymentDao.findOneTradePayment(trade.getTradeId());
         TradePayment payment = paymentOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.OBJECT_NOT_FOUND, "支付记录不存在"));
-        // 查询冻结订单
+        if (!payment.getAccountId().equals(cancel.getAccountId())) {
+            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "缴费资金账号不一致");
+        }
+        // 验证退款方密码, 查询冻结订单
         LocalDateTime when = LocalDateTime.now();
+        accountChannelService.checkTradePermission(trade.getAccountId(), cancel.getPassword(), 5);
         Optional<FrozenOrder> orderOpt = frozenOrderDao.findFrozenOrderByPaymentId(payment.getPaymentId());
         FrozenOrder order = orderOpt.orElseThrow(() -> new TradePaymentException(ErrorCode.OBJECT_NOT_FOUND, "冻结订单不存在"));
         if (order.getState() != FrozenState.FROZEN.getCode()) {
@@ -229,7 +237,7 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
         AccountFund fund = accountChannelService.submit(transaction);
         // 修改冻结订单状态
         FrozenStateDto frozenState = FrozenStateDto.of(order.getFrozenId(), FrozenState.UNFROZEN.getCode(),
-            trade.getVersion(), when);
+            order.getVersion(), when);
         if (frozenOrderDao.compareAndSetState(frozenState) == 0) {
             throw new TradePaymentException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统忙，请稍后再试");
         }

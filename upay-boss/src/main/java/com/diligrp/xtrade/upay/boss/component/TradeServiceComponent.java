@@ -5,25 +5,24 @@ import com.diligrp.xtrade.shared.sapi.CallableComponent;
 import com.diligrp.xtrade.shared.util.AssertUtils;
 import com.diligrp.xtrade.upay.boss.domain.FundBalance;
 import com.diligrp.xtrade.upay.boss.domain.TradeId;
-import com.diligrp.xtrade.upay.trade.domain.ApplicationPermit;
+import com.diligrp.xtrade.upay.core.domain.ApplicationPermit;
 import com.diligrp.xtrade.upay.trade.domain.ConfirmRequest;
 import com.diligrp.xtrade.upay.trade.domain.PaymentRequest;
 import com.diligrp.xtrade.upay.trade.domain.PaymentResult;
 import com.diligrp.xtrade.upay.trade.domain.RefundRequest;
 import com.diligrp.xtrade.upay.trade.domain.TradeRequest;
 import com.diligrp.xtrade.upay.trade.service.IPaymentPlatformService;
-import com.diligrp.xtrade.upay.trade.service.IAuthPaymentService;
 
 import javax.annotation.Resource;
 
+/**
+ * 交易服务组件
+ */
 @CallableComponent(id = "payment.trade.service")
 public class TradeServiceComponent {
 
     @Resource
     private IPaymentPlatformService paymentPlatformService;
-
-    @Resource
-    private IAuthPaymentService authPaymentService;
 
     /**
      * 创建交易订单，适用于所有交易业务
@@ -69,22 +68,6 @@ public class TradeServiceComponent {
     }
 
     /**
-     * 取消交易，适用于普通交易和预授权交易类型
-     * 预付支付交易需经历 prepare->commit->confirm/cancel三个阶段
-     * cancel阶段完成资金解冻，不进行任何消费
-     */
-    public FundBalance cancel(ServiceRequest<RefundRequest> request) {
-        RefundRequest cancelRequest = request.getData();
-        AssertUtils.notEmpty(cancelRequest.getTradeId(), "tradeId missed");
-
-        ApplicationPermit application = request.getContext().getObject(ApplicationPermit.class.getName(), ApplicationPermit.class);
-        PaymentResult result = paymentPlatformService.cancel(application, cancelRequest);
-        // 如有余额信息则返回余额信息
-        return result.fund().map(fund ->
-            FundBalance.of(fund.getAccountId(), fund.getBalance(), fund.getFrozenAmount())).orElse(null);
-    }
-
-    /**
      * 确认交易，只适用于预授权缴费业务类型
      * 预授权业务需经历 prepare->commit->confirm/cancel三个阶段
      * confirm阶段完成资金解冻与消费，消费金额可以大于冻结金额（原订单金额）
@@ -92,6 +75,7 @@ public class TradeServiceComponent {
     public FundBalance confirm(ServiceRequest<ConfirmRequest> request) {
         ConfirmRequest confirm = request.getData();
         AssertUtils.notEmpty(confirm.getTradeId(), "tradeId missed");
+        AssertUtils.notNull(confirm.getAccountId(), "accountId missed");
         AssertUtils.notEmpty(confirm.getPassword(), "password missed");
         AssertUtils.notNull(confirm.getAmount(), "amount missed");
         AssertUtils.isTrue(confirm.getAmount() > 0, "Invalid amount");
@@ -108,5 +92,23 @@ public class TradeServiceComponent {
         // 如有余额信息则返回余额信息
         return result.fund().map(fund ->
             FundBalance.of(fund.getAccountId(), fund.getBalance(), fund.getFrozenAmount())).orElse(null);
+    }
+
+    /**
+     * 取消交易，适用于普通交易和预授权交易类型
+     * 预付支付交易需经历 prepare->commit->confirm/cancel三个阶段
+     * cancel阶段完成资金解冻，不进行任何消费
+     */
+    public FundBalance cancel(ServiceRequest<RefundRequest> request) {
+        RefundRequest cancel = request.getData();
+        AssertUtils.notEmpty(cancel.getTradeId(), "tradeId missed");
+        AssertUtils.notNull(cancel.getAccountId(), "accountId missed");
+        AssertUtils.notEmpty(cancel.getPassword(), "password missed");
+
+        ApplicationPermit application = request.getContext().getObject(ApplicationPermit.class.getName(), ApplicationPermit.class);
+        PaymentResult result = paymentPlatformService.cancel(application, cancel);
+        // 如有余额信息则返回余额信息
+        return result.fund().map(fund ->
+                FundBalance.of(fund.getAccountId(), fund.getBalance(), fund.getFrozenAmount())).orElse(null);
     }
 }

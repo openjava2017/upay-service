@@ -121,4 +121,74 @@ public class RegisterAccount {
     public void setPassword(String password) {
         this.password = password;
     }
+
+    public static Builder builder() {
+        return new RegisterAccount().new Builder();
+    }
+
+    public class Builder {
+        public Builder customerId(Long customerId) {
+            RegisterAccount.this.customerId = customerId;
+            return this;
+        }
+
+        public Builder parentId(Long parentId) {
+            RegisterAccount.this.parentId = parentId;
+            return this;
+        }
+
+        public Builder type(Integer type) {
+            RegisterAccount.this.type = type;
+            return this;
+        }
+
+        public Builder useFor(Integer useFor) {
+            RegisterAccount.this.useFor = useFor;
+            return this;
+        }
+
+        public Builder code(String code) {
+            RegisterAccount.this.code = code;
+            return this;
+        }
+
+        public Builder name(String name) {
+            RegisterAccount.this.name = name;
+            return this;
+        }
+
+        public Builder gender(Integer gender) {
+            RegisterAccount.this.gender = gender;
+            return this;
+        }
+
+        public Builder mobile(String mobile) {
+            RegisterAccount.this.mobile = mobile;
+            return this;
+        }
+
+        public Builder email(String email) {
+            RegisterAccount.this.email = email;
+            return this;
+        }
+
+        public Builder idCode(String idCode) {
+            RegisterAccount.this.idCode = idCode;
+            return this;
+        }
+
+        public Builder address(String address) {
+            RegisterAccount.this.address = address;
+            return this;
+        }
+
+        public Builder password(String password) {
+            RegisterAccount.this.password = password;
+            return this;
+        }
+
+        public RegisterAccount build() {
+            return RegisterAccount.this;
+        }
+    }
 }

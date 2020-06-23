@@ -8,16 +8,27 @@ import java.util.Optional;
  * 交易撤销、交易退款和交易冲正请求模型
  */
 public class Refund extends HashMap<String, Object> {
+    // 交易账户ID
+    private Long accountId;
     // 操作金额
     private Long amount;
     // 支付密码
     private String password;
 
-    public static Refund of(Long amount, String password) {
+    public static Refund of(Long accountId, Long amount, String password) {
         Refund refund = new Refund();
+        refund.setAccountId(accountId);
         refund.setAmount(amount);
         refund.setPassword(password);
         return refund;
+    }
+
+    public Long getAccountId() {
+        return accountId;
+    }
+
+    public void setAccountId(Long accountId) {
+        this.accountId = accountId;
     }
 
     public Long getAmount() {

@@ -88,7 +88,7 @@ public class FrozenOrderServiceImpl implements IFrozenOrderService {
         accountChannelService.submit(transaction);
 
         FrozenStateDto updateState = FrozenStateDto.of(frozenId, FrozenState.UNFROZEN.getCode(),
-                order.getVersion(), now);
+            order.getVersion(), now);
         if (frozenOrderDao.compareAndSetState(updateState) <= 0) {
             throw new PaymentChannelException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统忙，请稍后再试");
         }

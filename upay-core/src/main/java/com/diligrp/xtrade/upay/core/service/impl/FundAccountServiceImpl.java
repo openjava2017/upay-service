@@ -71,7 +71,7 @@ public class FundAccountServiceImpl implements IFundAccountService {
         fundAccountDao.insertFundAccount(fundAccount);
         if (fundAccount.getParentId() == 0) {
             AccountFund accountFund = AccountFund.builder().accountId(accountId).balance(0L).frozenAmount(0L).vouchAmount(0L)
-                    .dailyAmount(0L).version(0).createdTime(when).build();
+                .dailyAmount(0L).version(0).createdTime(when).build();
             accountFundDao.insertAccountFund(accountFund);
         }
 
@@ -87,7 +87,7 @@ public class FundAccountServiceImpl implements IFundAccountService {
         Optional<AccountFund> fundOpt = accountFundDao.findAccountFundById(accountId);
         fundOpt.ifPresent(AccountStateMachine::unregisterFundCheck);
         AccountStateDto accountState = AccountStateDto.of(accountId, AccountState.VOID.getCode(),
-                LocalDateTime.now(), accountOpt.get().getVersion());
+            LocalDateTime.now(), accountOpt.get().getVersion());
         Integer result = fundAccountDao.compareAndSetState(accountState);
         if (result == 0) {
             throw new FundAccountException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统正忙，请稍后重试");

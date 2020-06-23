@@ -1,6 +1,7 @@
 package com.diligrp.xtrade.upay.channel.service.impl;
 
 import com.diligrp.xtrade.shared.security.PasswordUtils;
+import com.diligrp.xtrade.shared.util.AssertUtils;
 import com.diligrp.xtrade.shared.util.ObjectUtils;
 import com.diligrp.xtrade.upay.channel.domain.IFundTransaction;
 import com.diligrp.xtrade.upay.channel.exception.PaymentChannelException;
@@ -47,16 +48,28 @@ public class AccountChannelServiceImpl implements IAccountChannelService {
     }
 
     @Override
-    public void checkTradePermission(long accountId, String password, int maxPwdErrors) {
+    public FundAccount checkTradePermission(long accountId, String password, int maxPwdErrors) {
+        AssertUtils.notEmpty(password, "password missed");
         Optional<FundAccount> accountOpt = fundAccountDao.findFundAccountById(accountId);
         FundAccount account = accountOpt.orElseThrow(() -> new PaymentChannelException(ErrorCode.ACCOUNT_NOT_FOUND, "资金账号不存在"));
         if (account.getState() != AccountState.NORMAL.getCode()) {
-            throw new PaymentChannelException(ErrorCode.INVALID_ACCOUNT_STATE, "资金账户状态异常");
+            throw new PaymentChannelException(ErrorCode.INVALID_ACCOUNT_STATE, "账户状态异常");
         }
 
         String encodedPwd = PasswordUtils.encrypt(password, account.getSecretKey());
         if (!ObjectUtils.equals(encodedPwd, account.getPassword())) {
-            throw new PaymentChannelException(ErrorCode.INVALID_ACCOUNT_PASSWORD, "资金账户密码错误");
+            throw new PaymentChannelException(ErrorCode.INVALID_ACCOUNT_PASSWORD, "交易密码错误");
         }
+        return account;
+    }
+
+    @Override
+    public FundAccount checkTradePermission(long accountId) {
+        Optional<FundAccount> accountOpt = fundAccountDao.findFundAccountById(accountId);
+        FundAccount account = accountOpt.orElseThrow(() -> new PaymentChannelException(ErrorCode.ACCOUNT_NOT_FOUND, "资金账号不存在"));
+        if (account.getState() != AccountState.NORMAL.getCode()) {
+            throw new PaymentChannelException(ErrorCode.INVALID_ACCOUNT_STATE, "账户状态异常");
+        }
+        return account;
     }
 }

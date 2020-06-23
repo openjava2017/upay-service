@@ -12,4 +12,8 @@ public interface IMerchantDao extends MybatisMapperSupport {
     Optional<Application> findApplicationById(Long appId);
 
     Optional<Merchant> findMerchantById(Long mchId);
+
+    void insertMerchant(Merchant merchant);
+
+    void insertApplication(Application application);
 }
