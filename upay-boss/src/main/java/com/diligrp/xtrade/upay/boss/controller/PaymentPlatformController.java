@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.Enumeration;
 
 @RestController
-@RequestMapping("/payment/spi")
+@RequestMapping("/payment/api")
 public class PaymentPlatformController {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
