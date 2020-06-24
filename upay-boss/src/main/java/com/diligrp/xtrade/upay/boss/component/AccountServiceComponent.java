@@ -8,7 +8,6 @@ import com.diligrp.xtrade.upay.core.domain.ApplicationPermit;
 import com.diligrp.xtrade.upay.core.domain.RegisterAccount;
 import com.diligrp.xtrade.upay.core.service.IFundAccountService;
 import com.diligrp.xtrade.upay.core.type.AccountType;
-import org.springframework.util.Assert;
 
 import javax.annotation.Resource;
 

@@ -13,9 +13,9 @@ import java.util.stream.Stream;
  */
 public enum TradeType implements IEnumType {
 
-    DEPOSIT("充值", 10),
+    DEPOSIT("账户充值", 10),
 
-    WITHDRAW("提现", 11),
+    WITHDRAW("账户提现", 11),
 
     FEE("缴费", 12),
 
