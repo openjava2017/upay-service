@@ -9,6 +9,7 @@ import com.diligrp.xtrade.shared.sapi.ICallableServiceManager;
 import com.diligrp.xtrade.shared.util.AssertUtils;
 import com.diligrp.xtrade.shared.util.ObjectUtils;
 import com.diligrp.xtrade.upay.boss.util.Constants;
+import com.diligrp.xtrade.upay.boss.util.HttpUtils;
 import com.diligrp.xtrade.upay.core.ErrorCode;
 import com.diligrp.xtrade.upay.core.domain.ApplicationPermit;
 import com.diligrp.xtrade.upay.core.exception.PaymentServiceException;
@@ -20,10 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.util.Enumeration;
 
+/**
+ * 支付服务控制器
+ */
 @RestController
 @RequestMapping("/payment/api")
 public class PaymentPlatformController {
@@ -39,11 +40,11 @@ public class PaymentPlatformController {
     @RequestMapping(value = "/gateway.do")
     public Message<?> gateway(HttpServletRequest request) {
         try {
-            String payload = httpBody(request);
+            String payload = HttpUtils.httpBody(request);
             LOG.debug("payment request received, http body: {}", payload);
             AssertUtils.notEmpty(payload, "payment request payload missed");
 
-            RequestContext context = requestContext(request);
+            RequestContext context = HttpUtils.requestContext(request);
             String service = context.getString(Constants.PARAM_SERVICE);
             Long appId = context.getLong(Constants.PARAM_APPID);
             String accessToken = context.getString(Constants.PARAM_ACCESS_TOKEN);
@@ -51,14 +52,12 @@ public class PaymentPlatformController {
             String signature = context.getString(Constants.PARAM_SIGNATURE);
             String charset = context.getString(Constants.PARAM_CHARSET);
             MessageEnvelop envelop = MessageEnvelop.of(appId, service, accessToken, payload, signature, charset);
-            // 是否忽略访问权限检查，商户和应用注册将忽略权限检查
-            if (!ignoreAccessPermission(envelop)) {
-                ApplicationPermit application = checkAccessPermission(context, envelop);
-                // 如果应用配置了调用方的公钥信息，则进行数据验签
-                if (Constants.DATA_VERIFY_ENABLED && ObjectUtils.isNotEmpty(application.getPublicKey())) {
-                    envelop.unpackEnvelop(application.getPublicKey());
-                }
+            ApplicationPermit application = checkAccessPermission(context, envelop);
+            // 如果应用配置了调用方的公钥信息，则进行数据验签
+            if (Constants.DATA_VERIFY_ENABLED && ObjectUtils.isNotEmpty(application.getPublicKey())) {
+                envelop.unpackEnvelop(application.getPublicKey());
             }
+
             // TODO:如果设置了商户的私钥，则还需对数据进行签名
             return callableServiceManager.callService(context, envelop);
         } catch (IllegalArgumentException iex) {
@@ -88,42 +87,5 @@ public class PaymentPlatformController {
         }
         context.put(ApplicationPermit.class.getName(), application);
         return application;
-    }
-
-    private boolean ignoreAccessPermission(MessageEnvelop envelop) {
-        return envelop.getRecipient().startsWith(Constants.IGNORE_SERVICE_PREFIX);
-    }
-
-    private String httpBody(HttpServletRequest request) {
-        StringBuilder payload = new StringBuilder();
-        try {
-            String line;
-            BufferedReader reader = request.getReader();
-            while ((line = reader.readLine()) != null) {
-                payload.append(line);
-            }
-        } catch (IOException iex) {
-            LOG.error("Failed to extract http body", iex);
-        }
-
-        return payload.toString();
-    }
-
-    private RequestContext requestContext(HttpServletRequest request) {
-        RequestContext context = new RequestContext();
-        Enumeration<String> headers = request.getHeaderNames();
-        while (headers.hasMoreElements()) {
-            String name = headers.nextElement();
-            String value = request.getHeader(name);
-            context.put(name, value);
-        }
-
-        Enumeration<String> params = request.getParameterNames();
-        while (params.hasMoreElements()) {
-            String name = params.nextElement();
-            String value = request.getParameter(name);
-            context.put(name, value);
-        }
-        return context;
     }
 }
