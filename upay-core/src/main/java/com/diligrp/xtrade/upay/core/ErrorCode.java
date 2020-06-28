@@ -27,7 +27,7 @@ public class ErrorCode {
     // 交易不存在
     public static final int TRADE_NOT_FOUND = 502003;
     // 无效的交易状态
-    public static final int INVALID_TRADE_STATE = 502003;
+    public static final int INVALID_TRADE_STATE = 502004;
     // 资金账号不存在
     public static final int ACCOUNT_NOT_FOUND = 503001;
     // 无效资金账号状态
@@ -36,7 +36,4 @@ public class ErrorCode {
     public static final int INVALID_ACCOUNT_PASSWORD = 503002;
     // 账户余额不足
     public static final int INSUFFICIENT_ACCOUNT_FUND = 503003;
-    // 无效资金状态
-    public static final int INVALID_FUND_STATE = 503002;
-
 }

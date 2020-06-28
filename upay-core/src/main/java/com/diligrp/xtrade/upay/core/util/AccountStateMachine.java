@@ -44,7 +44,7 @@ public final class AccountStateMachine {
 
     public static void unregisterFundCheck(AccountFund fund) {
         if (fund.getBalance() > 0) {
-            throw new FundAccountException(ErrorCode.INVALID_FUND_STATE, "不能注销有余额的资金账户");
+            throw new FundAccountException(ErrorCode.OPERATION_NOT_ALLOWED, "不能注销有余额的资金账户");
         }
     }
 }
