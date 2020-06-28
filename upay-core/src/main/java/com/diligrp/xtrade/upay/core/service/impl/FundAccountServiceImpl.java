@@ -8,10 +8,10 @@ import com.diligrp.xtrade.upay.core.ErrorCode;
 import com.diligrp.xtrade.upay.core.dao.IAccountFundDao;
 import com.diligrp.xtrade.upay.core.dao.IFundAccountDao;
 import com.diligrp.xtrade.upay.core.domain.AccountStateDto;
-import com.diligrp.xtrade.upay.core.model.AccountFund;
-import com.diligrp.xtrade.upay.core.model.FundAccount;
 import com.diligrp.xtrade.upay.core.domain.RegisterAccount;
 import com.diligrp.xtrade.upay.core.exception.FundAccountException;
+import com.diligrp.xtrade.upay.core.model.AccountFund;
+import com.diligrp.xtrade.upay.core.model.FundAccount;
 import com.diligrp.xtrade.upay.core.service.IFundAccountService;
 import com.diligrp.xtrade.upay.core.type.AccountState;
 import com.diligrp.xtrade.upay.core.type.AccountType;
@@ -39,6 +39,9 @@ public class FundAccountServiceImpl implements IFundAccountService {
     @Resource
     private KeyGeneratorManager keyGeneratorManager;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public long createFundAccount(Long mchId, RegisterAccount account) {
@@ -78,6 +81,45 @@ public class FundAccountServiceImpl implements IFundAccountService {
         return accountId;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+    public void freezeFundAccount(Long accountId) {
+        Optional<FundAccount> accountOpt = fundAccountDao.findFundAccountById(accountId);
+        accountOpt.orElseThrow(() -> new FundAccountException(ErrorCode.ACCOUNT_NOT_FOUND, "资金账号不存在"));
+        accountOpt.ifPresent(AccountStateMachine::freezeAccountCheck);
+
+        AccountStateDto accountState = AccountStateDto.of(accountId, AccountState.FROZEN.getCode(),
+            LocalDateTime.now(), accountOpt.get().getVersion());
+        Integer result = fundAccountDao.compareAndSetState(accountState);
+        if (result == 0) {
+            throw new FundAccountException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统正忙，请稍后重试");
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+    public void unfreezeFundAccount(Long accountId) {
+        Optional<FundAccount> accountOpt = fundAccountDao.findFundAccountById(accountId);
+        accountOpt.orElseThrow(() -> new FundAccountException(ErrorCode.ACCOUNT_NOT_FOUND, "资金账号不存在"));
+        accountOpt.ifPresent(AccountStateMachine::unfreezeAccountCheck);
+
+        AccountStateDto accountState = AccountStateDto.of(accountId, AccountState.NORMAL.getCode(),
+            LocalDateTime.now(), accountOpt.get().getVersion());
+        Integer result = fundAccountDao.compareAndSetState(accountState);
+        if (result == 0) {
+            throw new FundAccountException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统正忙，请稍后重试");
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public void unregisterFundAccount(Long accountId) {

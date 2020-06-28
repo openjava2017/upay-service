@@ -12,6 +12,16 @@ public interface IFundAccountService {
     long createFundAccount(Long mchId, RegisterAccount account);
 
     /**
+     * 冻结资金账号
+     */
+    void freezeFundAccount(Long accountId);
+
+    /**
+     * 解冻资金账号
+     */
+    void unfreezeFundAccount(Long accountId);
+
+    /**
      * 注销资金账号
      */
     void unregisterFundAccount(Long accountId);

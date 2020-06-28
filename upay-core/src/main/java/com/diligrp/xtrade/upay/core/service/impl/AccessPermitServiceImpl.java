@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
- * 支付平台访问许可服务
+ * 支付平台接入许可服务
  */
 @Service("accessPermitService")
 public class AccessPermitServiceImpl implements IAccessPermitService {
@@ -36,7 +36,10 @@ public class AccessPermitServiceImpl implements IAccessPermitService {
     @Resource
     private IFundAccountService fundAccountService;
 
-        @Override
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public ApplicationPermit loadApplicationPermit(Long appId) {
         // TODO: load from cache or database
         Optional<Application> application = merchantDao.findApplicationById(appId);
@@ -48,6 +51,9 @@ public class AccessPermitServiceImpl implements IAccessPermitService {
         }).orElseThrow(() -> new ServiceAccessException(ErrorCode.OBJECT_NOT_FOUND, "应用信息未注册"));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public MerchantPermit registerMerchant(RegisterMerchant request) {
@@ -85,6 +91,9 @@ public class AccessPermitServiceImpl implements IAccessPermitService {
         return MerchantPermit.of(request.getMchId(), profileId, vouchId, pledgeId, keyPair[0], keyPair[1]);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public ApplicationPermit registerApplication(RegisterApplication request) {
@@ -94,7 +103,7 @@ public class AccessPermitServiceImpl implements IAccessPermitService {
         applicationOpt.ifPresent(application -> new PaymentServiceException(ErrorCode.OBJECT_ALREADY_EXISTS, "接入应用已存在"));
 
         LocalDateTime now = LocalDateTime.now();
-        String[] keyPair = null;
+        String[] keyPair;
         try {
             keyPair = RsaCipher.generateRSAKeyPair();
         } catch (Exception ex) {

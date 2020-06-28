@@ -8,14 +8,13 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
- * @author: brenthuang
- * @date: 2020/03/24
+ * 账户状态列表
  */
 public enum AccountState implements IEnumType {
 
     NORMAL("正常", 1),
 
-    LOCKED("锁定", 2),
+    FROZEN("冻结", 2),
 
     VOID("注销", 3);
 

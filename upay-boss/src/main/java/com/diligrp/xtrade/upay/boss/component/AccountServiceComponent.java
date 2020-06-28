@@ -19,6 +19,9 @@ public class AccountServiceComponent {
     @Resource
     private IFundAccountService fundAccountService;
 
+    /**
+     * 注册资金账号
+     */
     public AccountId register(ServiceRequest<RegisterAccount> request) {
         RegisterAccount account = request.getData();
         // 进行入参校验
@@ -35,6 +38,27 @@ public class AccountServiceComponent {
         return AccountId.of(accountId);
     }
 
+    /**
+     * 冻结资金账号
+     */
+    public void freeze(ServiceRequest<AccountId> request) {
+        AccountId accountId = request.getData();
+        AssertUtils.notNull(accountId.getAccountId(), "accountId missed");
+        fundAccountService.freezeFundAccount(accountId.getAccountId());
+    }
+
+    /**
+     * 解冻资金账号
+     */
+    public void unfreeze(ServiceRequest<AccountId> request) {
+        AccountId accountId = request.getData();
+        AssertUtils.notNull(accountId.getAccountId(), "accountId missed");
+        fundAccountService.unfreezeFundAccount(accountId.getAccountId());
+    }
+
+    /**
+     * 注销资金账号
+     */
     public void unregister(ServiceRequest<AccountId> request) {
         AccountId accountId = request.getData();
         AssertUtils.notNull(accountId.getAccountId(), "accountId missed");

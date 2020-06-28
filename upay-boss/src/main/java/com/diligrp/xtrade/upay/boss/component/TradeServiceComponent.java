@@ -68,9 +68,9 @@ public class TradeServiceComponent {
     }
 
     /**
-     * 确认交易，只适用于预授权缴费业务类型
-     * 预授权业务需经历 prepare->commit->confirm/cancel三个阶段
-     * confirm阶段完成资金解冻与消费，消费金额可以大于冻结金额（原订单金额）
+     * 确认交易，只适用于预授权交易
+     * 预授权交易需经历 prepare->commit->confirm/cancel三个阶段
+     * confirm阶段解冻资金并完成实际交易消费，实际交易金额可以大于冻结金额（原订单金额）
      */
     public FundBalance confirm(ServiceRequest<ConfirmRequest> request) {
         ConfirmRequest confirm = request.getData();
@@ -96,8 +96,8 @@ public class TradeServiceComponent {
 
     /**
      * 取消交易，适用于普通交易和预授权交易类型
-     * 预付支付交易需经历 prepare->commit->confirm/cancel三个阶段
-     * cancel阶段完成资金解冻，不进行任何消费
+     * 预授权交易需经历 prepare->commit->confirm/cancel三个阶段
+     * 预授权交易的cancel阶段完成资金解冻，不进行任何消费；交易确认后cancel将完成资金逆向操作
      */
     public FundBalance cancel(ServiceRequest<RefundRequest> request) {
         RefundRequest cancel = request.getData();
@@ -109,6 +109,6 @@ public class TradeServiceComponent {
         PaymentResult result = paymentPlatformService.cancel(application, cancel);
         // 如有余额信息则返回余额信息
         return result.fund().map(fund ->
-                FundBalance.of(fund.getAccountId(), fund.getBalance(), fund.getFrozenAmount())).orElse(null);
+            FundBalance.of(fund.getAccountId(), fund.getBalance(), fund.getFrozenAmount())).orElse(null);
     }
 }
