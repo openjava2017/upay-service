@@ -11,5 +11,7 @@ public final class Constants {
 
     public final static String PARAM_CHARSET = "charset";
 
+    public final static String PARAM_PERMIT_SERVICE = "payment.permit.register";
+
     public final static boolean DATA_VERIFY_ENABLED = false;
 }
