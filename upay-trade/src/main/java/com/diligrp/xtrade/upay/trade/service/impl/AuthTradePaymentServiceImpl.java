@@ -13,14 +13,12 @@ import com.diligrp.xtrade.upay.channel.type.ChannelType;
 import com.diligrp.xtrade.upay.channel.type.FrozenState;
 import com.diligrp.xtrade.upay.channel.type.FrozenType;
 import com.diligrp.xtrade.upay.core.ErrorCode;
-import com.diligrp.xtrade.upay.core.dao.IFundAccountDao;
 import com.diligrp.xtrade.upay.core.dao.IMerchantDao;
 import com.diligrp.xtrade.upay.core.domain.MerchantPermit;
-import com.diligrp.xtrade.upay.core.model.AccountFund;
+import com.diligrp.xtrade.upay.core.domain.TransactionStatus;
 import com.diligrp.xtrade.upay.core.model.FundAccount;
 import com.diligrp.xtrade.upay.core.type.SequenceKey;
 import com.diligrp.xtrade.upay.trade.dao.IPaymentFeeDao;
-import com.diligrp.xtrade.upay.trade.dao.IRefundPaymentDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradeOrderDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradePaymentDao;
 import com.diligrp.xtrade.upay.trade.domain.Confirm;
@@ -95,7 +93,7 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
         AccountChannel channel = AccountChannel.of(paymentId, payment.getAccountId());
         IFundTransaction transaction = channel.openTransaction(FrozenState.FROZEN.getCode(), now);
         transaction.freeze(trade.getAmount());
-        AccountFund fund = accountChannelService.submit(transaction);
+        TransactionStatus status = accountChannelService.submit(transaction);
 
         // 创建冻结资金订单
         long frozenId = keyGeneratorManager.getKeyGenerator(SequenceKey.FROZEN_ID).nextId();
@@ -118,7 +116,7 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
             .description(TradeType.AUTH_TRADE.getName()).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
 
-        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, fund);
+        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, status);
     }
 
     /**
@@ -160,7 +158,7 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
         fees.stream().filter(Fee::forBuyer).forEach(fee -> {
             fromTransaction.outgo(fee.getAmount(), fee.getType(), fee.getTypeName());
         });
-        AccountFund fund = accountChannelService.submit(fromTransaction);
+        TransactionStatus status = accountChannelService.submit(fromTransaction);
 
         // 处理卖家收款和卖家佣金
         AccountChannel toChannel = AccountChannel.of(payment.getPaymentId(), trade.getAccountId());
@@ -210,7 +208,7 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
             paymentFeeDao.insertPaymentFees(paymentFeeDos);
         }
 
-        return PaymentResult.of(PaymentResult.CODE_SUCCESS, payment.getPaymentId(), fund);
+        return PaymentResult.of(PaymentResult.CODE_SUCCESS, payment.getPaymentId(), status);
     }
 
     /**
@@ -243,7 +241,7 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
         AccountChannel channel = AccountChannel.of(payment.getPaymentId(), payment.getAccountId());
         IFundTransaction transaction = channel.openTransaction(trade.getType(), when);
         transaction.unfreeze(trade.getAmount());
-        AccountFund fund = accountChannelService.submit(transaction);
+        TransactionStatus status = accountChannelService.submit(transaction);
         // 修改冻结订单状态
         FrozenStateDto frozenState = FrozenStateDto.of(order.getFrozenId(), FrozenState.UNFROZEN.getCode(),
             order.getVersion(), when);
@@ -261,7 +259,7 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
         if (tradeOrderDao.compareAndSetState(tradeState) == 0) {
             throw new TradePaymentException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统忙，请稍后再试");
         }
-        return PaymentResult.of(PaymentResult.CODE_SUCCESS, payment.getPaymentId(), fund);
+        return PaymentResult.of(PaymentResult.CODE_SUCCESS, payment.getPaymentId(), status);
     }
 
     @Override

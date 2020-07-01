@@ -9,6 +9,8 @@ public class FundTransaction {
     private long accountId;
     // 业务类型
     private int type;
+    // 冻结或解冻金额
+    private long frozenAmount;
     // 资金明细
     private FundActivity[] activities;
     // 发生时间
@@ -38,6 +40,14 @@ public class FundTransaction {
         this.type = type;
     }
 
+    public long getFrozenAmount() {
+        return frozenAmount;
+    }
+
+    public void setFrozenAmount(long frozenAmount) {
+        this.frozenAmount = frozenAmount;
+    }
+
     public FundActivity[] getActivities() {
         return activities;
     }
@@ -54,12 +64,25 @@ public class FundTransaction {
         this.when = when;
     }
 
-    public static FundTransaction of(String paymentId, long accountId, int type,
+    public boolean isFrozenTransacton() {
+        return frozenAmount > 0;
+    }
+
+    public boolean isUnfrozenTransaction() {
+        return frozenAmount < 0;
+    }
+
+    public boolean isFundTransaction() {
+        return activities != null && activities.length > 0;
+    }
+
+    public static FundTransaction of(String paymentId, long accountId, int type, long frozenAmount,
                                      FundActivity[] activities, LocalDateTime when) {
         FundTransaction transaction = new FundTransaction();
         transaction.setPaymentId(paymentId);
         transaction.setAccountId(accountId);
         transaction.setType(type);
+        transaction.setFrozenAmount(frozenAmount);
         transaction.setActivities(activities);
         transaction.setWhen(when);
         return transaction;

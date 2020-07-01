@@ -1,15 +1,11 @@
 package com.diligrp.xtrade.upay.core.service;
 
-import com.diligrp.xtrade.upay.core.domain.FrozenTransaction;
 import com.diligrp.xtrade.upay.core.domain.FundTransaction;
-import com.diligrp.xtrade.upay.core.model.AccountFund;
+import com.diligrp.xtrade.upay.core.domain.TransactionStatus;
 
 public interface IFundStreamEngine {
-    AccountFund submit(FundTransaction transaction);
-
-    AccountFund submitOnce(FundTransaction transaction);
-
-    AccountFund submit(FrozenTransaction transaction);
-
-    AccountFund submitOnce(FrozenTransaction transaction);
+    /**
+     * 提交资金事务: 操作资金余额和添加资金流水、冻结和解冻资金
+     */
+    TransactionStatus submit(FundTransaction transaction);
 }

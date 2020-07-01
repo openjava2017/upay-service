@@ -8,8 +8,7 @@ import com.diligrp.xtrade.upay.channel.service.IAccountChannelService;
 import com.diligrp.xtrade.upay.channel.type.ChannelType;
 import com.diligrp.xtrade.upay.core.ErrorCode;
 import com.diligrp.xtrade.upay.core.domain.MerchantPermit;
-import com.diligrp.xtrade.upay.core.domain.RegisterMerchant;
-import com.diligrp.xtrade.upay.core.model.AccountFund;
+import com.diligrp.xtrade.upay.core.domain.TransactionStatus;
 import com.diligrp.xtrade.upay.core.type.SequenceKey;
 import com.diligrp.xtrade.upay.trade.dao.IPaymentFeeDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradeOrderDao;
@@ -80,7 +79,7 @@ public class WithdrawPaymentServiceImpl implements IPaymentService {
         fees.forEach(fee -> {
             transaction.outgo(fee.getAmount(), fee.getType(), fee.getTypeName());
         });
-        AccountFund fund = accountChannelService.submit(transaction);
+        TransactionStatus status = accountChannelService.submit(transaction);
 
         // 处理商户收益
         if (!fees.isEmpty()) {
@@ -114,7 +113,7 @@ public class WithdrawPaymentServiceImpl implements IPaymentService {
             paymentFeeDao.insertPaymentFees(paymentFeeDos);
         }
 
-        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, fund);
+        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, status);
     }
 
     @Override

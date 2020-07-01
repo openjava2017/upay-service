@@ -1,5 +1,6 @@
 package com.diligrp.xtrade.upay.trade.domain;
 
+import com.diligrp.xtrade.upay.core.domain.TransactionStatus;
 import com.diligrp.xtrade.upay.core.model.AccountFund;
 
 import java.util.HashMap;
@@ -14,7 +15,7 @@ public class PaymentResult extends HashMap<String, Object> {
     // 支付ID
     private String paymentId;
     // 账户资金
-    private AccountFund fund;
+    private TransactionStatus status;
 
     public String getPaymentId() {
         return paymentId;
@@ -32,16 +33,12 @@ public class PaymentResult extends HashMap<String, Object> {
         this.code = code;
     }
 
-    public AccountFund getFund() {
-        return fund;
+    public TransactionStatus getStatus() {
+        return status;
     }
 
-    public void setFund(AccountFund fund) {
-        this.fund = fund;
-    }
-
-    public Optional<AccountFund> fund() {
-        return Optional.ofNullable(fund);
+    public void setStatus(TransactionStatus status) {
+        this.status = status;
     }
 
     public boolean isSuccess() {
@@ -52,11 +49,11 @@ public class PaymentResult extends HashMap<String, Object> {
         return PaymentResult.of(code, paymentId, null);
     }
 
-    public static PaymentResult of(int code, String paymentId, AccountFund fund) {
+    public static PaymentResult of(int code, String paymentId, TransactionStatus status) {
         PaymentResult paymentState = new PaymentResult();
         paymentState.setPaymentId(paymentId);
         paymentState.setCode(code);
-        paymentState.setFund(fund);
+        paymentState.setStatus(status);
         return paymentState;
     }
 }

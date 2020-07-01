@@ -10,7 +10,7 @@ import com.diligrp.xtrade.upay.channel.type.ChannelType;
 import com.diligrp.xtrade.upay.core.ErrorCode;
 import com.diligrp.xtrade.upay.core.dao.IMerchantDao;
 import com.diligrp.xtrade.upay.core.domain.MerchantPermit;
-import com.diligrp.xtrade.upay.core.model.AccountFund;
+import com.diligrp.xtrade.upay.core.domain.TransactionStatus;
 import com.diligrp.xtrade.upay.core.type.SequenceKey;
 import com.diligrp.xtrade.upay.trade.dao.IPaymentFeeDao;
 import com.diligrp.xtrade.upay.trade.dao.IRefundPaymentDao;
@@ -85,7 +85,7 @@ public class FeePaymentServiceImpl implements IPaymentService {
         }
 
         // 处理账户余额缴费
-        AccountFund fund = null;
+        TransactionStatus status = null;
         LocalDateTime now = LocalDateTime.now();
         accountChannelService.checkTradePermission(payment.getAccountId(), payment.getPassword(), 5);
         ISerialKeyGenerator keyGenerator = keyGeneratorManager.getSerialKeyGenerator(SequenceKey.PAYMENT_ID);
@@ -96,7 +96,7 @@ public class FeePaymentServiceImpl implements IPaymentService {
             fees.forEach(fee ->
                 transaction.outgo(fee.getAmount(), fee.getType(), fee.getTypeName())
             );
-            fund = accountChannelService.submit(transaction);
+            status = accountChannelService.submit(transaction);
         }
 
         // 处理商户收款
@@ -125,7 +125,7 @@ public class FeePaymentServiceImpl implements IPaymentService {
         ).collect(Collectors.toList());
         paymentFeeDao.insertPaymentFees(paymentFeeDos);
 
-        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, fund);
+        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, status);
     }
 
     /**
@@ -165,14 +165,14 @@ public class FeePaymentServiceImpl implements IPaymentService {
         accountChannelService.submit(feeTransaction);
 
         // 处理客户收款
-        AccountFund fund = null;
+        TransactionStatus status = null;
         if (payment.getChannelId() == ChannelType.ACCOUNT.getCode()) {
             AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId());
             IFundTransaction transaction = channel.openTransaction(TradeType.CANCEL.getCode(), now);
             fees.forEach(fee ->
                 transaction.income(fee.getAmount(), fee.getType(), fee.getTypeName())
             );
-            fund = accountChannelService.submit(transaction);
+            status = accountChannelService.submit(transaction);
         }
 
         RefundPayment refund = RefundPayment.builder().paymentId(paymentId).type(TradeType.CANCEL.getCode())
@@ -190,7 +190,7 @@ public class FeePaymentServiceImpl implements IPaymentService {
         if (tradeOrderDao.compareAndSetState(tradeState) == 0) {
             throw new TradePaymentException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统忙，请稍后再试");
         }
-        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, fund);
+        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, status);
     }
 
     @Override

@@ -7,7 +7,7 @@ import com.diligrp.xtrade.upay.channel.domain.IFundTransaction;
 import com.diligrp.xtrade.upay.channel.service.IAccountChannelService;
 import com.diligrp.xtrade.upay.channel.type.ChannelType;
 import com.diligrp.xtrade.upay.core.ErrorCode;
-import com.diligrp.xtrade.upay.core.model.AccountFund;
+import com.diligrp.xtrade.upay.core.domain.TransactionStatus;
 import com.diligrp.xtrade.upay.core.type.SequenceKey;
 import com.diligrp.xtrade.upay.trade.dao.ITradeOrderDao;
 import com.diligrp.xtrade.upay.trade.dao.ITradePaymentDao;
@@ -65,7 +65,7 @@ public class TransferPaymentServiceImpl implements IPaymentService {
         AccountChannel fromChannel = AccountChannel.of(paymentId, payment.getAccountId());
         IFundTransaction fromTransaction = fromChannel.openTransaction(trade.getType(), now);
         fromTransaction.outgo(trade.getAmount(), FundType.FUND.getCode(), FundType.FUND.getName());
-        AccountFund fund = accountChannelService.submit(fromTransaction);
+        TransactionStatus status = accountChannelService.submit(fromTransaction);
 
         // 处理卖家收款
         AccountChannel toChannel = AccountChannel.of(paymentId, trade.getAccountId());
@@ -86,7 +86,7 @@ public class TransferPaymentServiceImpl implements IPaymentService {
             .description(TradeType.TRANSFER.getName()).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
 
-        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, fund);
+        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, status);
     }
 
     @Override

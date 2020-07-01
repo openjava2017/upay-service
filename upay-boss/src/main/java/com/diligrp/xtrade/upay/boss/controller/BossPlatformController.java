@@ -21,7 +21,7 @@ import javax.servlet.http.HttpServletRequest;
  * 支付管理服务控制器
  */
 @RestController
-@RequestMapping("/payment/boss")
+@RequestMapping("/payment/spi")
 public class BossPlatformController {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass());
@@ -29,7 +29,7 @@ public class BossPlatformController {
     @Resource
     private ICallableServiceManager callableServiceManager;
 
-    @RequestMapping(value = "/gateway.do")
+    @RequestMapping(value = "/boss.do")
     public Message<?> gateway(HttpServletRequest request) {
         try {
             String payload = HttpUtils.httpBody(request);

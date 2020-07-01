@@ -1,7 +1,6 @@
 package com.diligrp.xtrade.upay.channel.domain;
 
 import com.diligrp.xtrade.shared.util.AssertUtils;
-import com.diligrp.xtrade.upay.core.domain.FrozenTransaction;
 import com.diligrp.xtrade.upay.core.domain.FundActivity;
 import com.diligrp.xtrade.upay.core.domain.FundTransaction;
 
@@ -78,22 +77,14 @@ public class AccountChannel {
 
         @Override
         public Optional<FundTransaction> fundTransaction() {
-            if (funds.isEmpty()) {
+            if (!funds.isEmpty()) {
+                AssertUtils.notEmpty(paymentId, "paymentId missed");
+            } else if (frozenAmount == 0) {
                 return Optional.ofNullable(null);
             }
-            AssertUtils.notEmpty(paymentId, "paymentId missed");
 
             FundActivity[] fundActivities = funds.toArray(new FundActivity[funds.size()]);
-            return Optional.of(FundTransaction.of(paymentId, accountId, tradeType, fundActivities, when));
-        }
-
-        @Override
-        public Optional<FrozenTransaction> frozenTransaction() {
-            if (frozenAmount == 0) {
-                return Optional.ofNullable(null);
-            }
-
-            return Optional.of(FrozenTransaction.of(accountId, frozenAmount, when));
+            return Optional.of(FundTransaction.of(paymentId, accountId, tradeType, frozenAmount, fundActivities, when));
         }
     }
 }

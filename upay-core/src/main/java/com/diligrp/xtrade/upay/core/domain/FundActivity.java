@@ -32,6 +32,12 @@ public class FundActivity {
         this.typeName = typeName;
     }
 
+    public static int compare(FundActivity a, FundActivity b) {
+        int valueA = a.getAmount() > 0 ? 1 : 2;
+        int valueB = b.getAmount() > 0 ? 1 : 2;
+        return valueA - valueB;
+    }
+
     public static FundActivity of(long amount, int type, String typeName) {
         FundActivity activity = new FundActivity();
         activity.setAmount(amount);

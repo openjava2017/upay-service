@@ -1,6 +1,5 @@
 package com.diligrp.xtrade.upay.channel.domain;
 
-import com.diligrp.xtrade.upay.core.domain.FrozenTransaction;
 import com.diligrp.xtrade.upay.core.domain.FundTransaction;
 
 import java.util.Optional;
@@ -15,6 +14,4 @@ public interface IFundTransaction {
     void unfreeze(long amount);
 
     Optional<FundTransaction> fundTransaction();
-
-    Optional<FrozenTransaction> frozenTransaction();
 }

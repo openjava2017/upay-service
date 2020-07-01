@@ -13,10 +13,9 @@ import com.diligrp.xtrade.upay.channel.type.ChannelType;
 import com.diligrp.xtrade.upay.channel.type.FrozenState;
 import com.diligrp.xtrade.upay.channel.type.FrozenType;
 import com.diligrp.xtrade.upay.core.ErrorCode;
-import com.diligrp.xtrade.upay.core.dao.IFundAccountDao;
 import com.diligrp.xtrade.upay.core.dao.IMerchantDao;
 import com.diligrp.xtrade.upay.core.domain.MerchantPermit;
-import com.diligrp.xtrade.upay.core.model.AccountFund;
+import com.diligrp.xtrade.upay.core.domain.TransactionStatus;
 import com.diligrp.xtrade.upay.core.model.FundAccount;
 import com.diligrp.xtrade.upay.core.type.SequenceKey;
 import com.diligrp.xtrade.upay.trade.dao.IPaymentFeeDao;
@@ -54,9 +53,6 @@ import java.util.stream.Collectors;
  */
 @Service("authFeePaymentService")
 public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements IPaymentService {
-
-    @Resource
-    private IFundAccountDao fundAccountDao;
 
     @Resource
     private ITradePaymentDao tradePaymentDao;
@@ -99,7 +95,7 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
         AccountChannel channel = AccountChannel.of(paymentId, payment.getAccountId());
         IFundTransaction transaction = channel.openTransaction(FrozenState.FROZEN.getCode(), now);
         transaction.freeze(trade.getAmount());
-        AccountFund fund = accountChannelService.submit(transaction);
+        TransactionStatus status = accountChannelService.submit(transaction);
 
         // 创建冻结资金订单
         long frozenId = keyGeneratorManager.getKeyGenerator(SequenceKey.FROZEN_ID).nextId();
@@ -122,7 +118,7 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
             .description(TradeType.AUTH_FEE.getName()).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
 
-        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, fund);
+        return PaymentResult.of(PaymentResult.CODE_SUCCESS, paymentId, status);
     }
 
     /**
@@ -165,7 +161,7 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
         fees.forEach(fee ->
             transaction.outgo(fee.getAmount(), fee.getType(), fee.getTypeName())
         );
-        AccountFund fund = accountChannelService.submit(transaction);
+        TransactionStatus status = accountChannelService.submit(transaction);
 
         // 园区收益账户收款
         AccountChannel merChannel = AccountChannel.of(payment.getPaymentId(), merchant.getProfitAccount());
@@ -198,7 +194,7 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
         ).collect(Collectors.toList());
         paymentFeeDao.insertPaymentFees(paymentFees);
 
-        return PaymentResult.of(PaymentResult.CODE_SUCCESS, payment.getPaymentId(), fund);
+        return PaymentResult.of(PaymentResult.CODE_SUCCESS, payment.getPaymentId(), status);
     }
 
     /**
@@ -234,7 +230,7 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
         AccountChannel channel = AccountChannel.of(payment.getPaymentId(), payment.getAccountId());
         IFundTransaction transaction = channel.openTransaction(trade.getType(), when);
         transaction.unfreeze(trade.getAmount());
-        AccountFund fund = accountChannelService.submit(transaction);
+        TransactionStatus status = accountChannelService.submit(transaction);
         // 修改冻结订单状态
         FrozenStateDto frozenState = FrozenStateDto.of(order.getFrozenId(), FrozenState.UNFROZEN.getCode(),
             order.getVersion(), when);
@@ -252,7 +248,7 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
         if (tradeOrderDao.compareAndSetState(tradeState) == 0) {
             throw new TradePaymentException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统忙，请稍后再试");
         }
-        return PaymentResult.of(PaymentResult.CODE_SUCCESS, payment.getPaymentId(), fund);
+        return PaymentResult.of(PaymentResult.CODE_SUCCESS, payment.getPaymentId(), status);
     }
 
     @Override
