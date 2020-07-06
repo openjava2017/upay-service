@@ -25,6 +25,9 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+/**
+ * 资金冻结/解冻订单服务实现
+ */
 @Service("frozenOrderService")
 public class FrozenOrderServiceImpl implements IFrozenOrderService {
 
@@ -41,6 +44,8 @@ public class FrozenOrderServiceImpl implements IFrozenOrderService {
     private IAccountChannelService accountChannelService;
 
     /**
+     * {@inheritDoc}
+     *
      *  人工冻结资金
      */
     @Override
@@ -69,6 +74,8 @@ public class FrozenOrderServiceImpl implements IFrozenOrderService {
     }
 
     /**
+     * {@inheritDoc}
+     *
      *  人工解冻资金
      */
     @Override

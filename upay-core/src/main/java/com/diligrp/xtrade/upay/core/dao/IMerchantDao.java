@@ -7,6 +7,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/**
+ * 商户/应用数据访问层
+ */
 @Repository("merchantDao")
 public interface IMerchantDao extends MybatisMapperSupport {
     Optional<Application> findApplicationById(Long appId);

@@ -8,8 +8,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
- * @author: brenthuang
- * @date: 2020/03/24
+ * 交易状态列表
  */
 public enum TradeState implements IEnumType {
 

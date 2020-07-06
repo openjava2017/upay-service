@@ -1,5 +1,8 @@
 package com.diligrp.xtrade.upay.boss.domain;
 
+/**
+ * 账号冻结接口层模型
+ */
 public class FrozenId {
     // 冻结ID
     private Long frozenId;

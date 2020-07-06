@@ -9,6 +9,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Enumeration;
 
+/**
+ * HTTP工具类
+ */
 public final class HttpUtils {
 
     private static Logger LOG = LoggerFactory.getLogger(HttpUtils.class);

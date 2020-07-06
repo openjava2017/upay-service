@@ -6,6 +6,9 @@ import com.diligrp.xtrade.upay.core.model.AccountFund;
 import com.diligrp.xtrade.upay.core.model.FundAccount;
 import com.diligrp.xtrade.upay.core.type.AccountState;
 
+/**
+ * 资金账户状态机
+ */
 public final class AccountStateMachine {
     public static void freezeAccountCheck(FundAccount account) {
         // 冻结资金账户状态检查

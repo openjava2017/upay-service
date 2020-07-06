@@ -45,6 +45,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * 即时交易业务：交易资金即时到帐且支持收取买卖家交易佣金
+ */
 @Service("tradePaymentService")
 public class TradePaymentServiceImpl implements IPaymentService {
 
@@ -69,6 +72,11 @@ public class TradePaymentServiceImpl implements IPaymentService {
     @Resource
     private KeyGeneratorManager keyGeneratorManager;
 
+    /**
+     * {@inheritDoc}
+     *
+     * 支持买卖家同时收取交易佣金，交易佣金直接入商户收益账户
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public PaymentResult commit(TradeOrder trade, Payment payment) {
@@ -142,6 +150,8 @@ public class TradePaymentServiceImpl implements IPaymentService {
     }
 
     /**
+     * {@inheritDoc}
+     *
      * 撤销交易-退交易资金和佣金，交易撤销需要修改交易订单状态
      */
     @Override

@@ -7,6 +7,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * 支付费用数据访问层
+ */
 @Repository("paymentFeeDao")
 public interface IPaymentFeeDao extends MybatisMapperSupport {
     void insertPaymentFees(List<PaymentFee> fees);

@@ -1,5 +1,8 @@
 package com.diligrp.xtrade.upay.boss.domain;
 
+/**
+ * 交易ID接口层模型
+ */
 public class TradeId {
     // 交易ID
     private String tradeId;

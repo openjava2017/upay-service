@@ -75,6 +75,11 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
     @Resource
     private KeyGeneratorManager keyGeneratorManager;
 
+    /**
+     * {@inheritDoc}
+     *
+     * 预授权缴费将直接冻结资金，不做实际缴费；提交预授权的资金账号需与创建交易的资金账号一致
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public PaymentResult commit(TradeOrder trade, Payment payment) {
@@ -122,6 +127,8 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
     }
 
     /**
+     * {@inheritDoc}
+     *
      * "预授权缴费"业务确认预授权消费(交易冻结后确认实际缴费金额)，当前业务场景允许实际缴费金额大于冻结金额
      */
     @Override
@@ -198,6 +205,8 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
     }
 
     /**
+     * {@inheritDoc}
+     *
      * "预授权缴费"确认前撤销交易, 将解冻资金冻结并变成可用余额; 确认缴费后撤销交易，将缴费金额退还至缴费账号。
      */
     @Override

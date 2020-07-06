@@ -16,6 +16,7 @@ import javax.annotation.Resource;
  */
 @CallableComponent(id = "payment.account.service")
 public class AccountServiceComponent {
+
     @Resource
     private IFundAccountService fundAccountService;
 

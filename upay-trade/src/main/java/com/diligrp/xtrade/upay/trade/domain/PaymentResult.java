@@ -6,6 +6,9 @@ import com.diligrp.xtrade.upay.core.model.AccountFund;
 import java.util.HashMap;
 import java.util.Optional;
 
+/**
+ * 支付结果模型
+ */
 public class PaymentResult extends HashMap<String, Object> {
     // 交易成功
     public static final int CODE_SUCCESS = 200;

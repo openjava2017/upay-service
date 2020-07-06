@@ -8,8 +8,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
- * @author: brenthuang
- * @date: 2020/03/24
+ * 资金冻结类型
  */
 public enum FrozenType implements IEnumType {
     // 内部交易冻结

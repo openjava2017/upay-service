@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 交易支付数据访问层
+ */
 @Repository("tradePaymentDao")
 public interface ITradePaymentDao extends MybatisMapperSupport {
     void insertTradePayment(TradePayment payment);

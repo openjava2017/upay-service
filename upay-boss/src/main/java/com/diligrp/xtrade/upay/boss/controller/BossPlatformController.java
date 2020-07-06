@@ -18,7 +18,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * 支付管理服务控制器
+ * 支付管理后台控制器
  */
 @RestController
 @RequestMapping("/payment/spi")

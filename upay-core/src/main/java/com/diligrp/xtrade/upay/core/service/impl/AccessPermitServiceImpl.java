@@ -22,7 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 支付平台接入许可服务
@@ -36,19 +38,42 @@ public class AccessPermitServiceImpl implements IAccessPermitService {
     @Resource
     private IFundAccountService fundAccountService;
 
+    private Map<Long, ApplicationPermit> permits = new ConcurrentHashMap<>();
+
     /**
      * {@inheritDoc}
+     *
+     * 由于商户和应用信息一旦创建基本上不会修改，因此可以缓存在本地JVM中；
+     * 如后期需要限制商户状态，则只能缓存在REDIS中，商户状态更新时同步更新缓存
      */
     @Override
     public ApplicationPermit loadApplicationPermit(Long appId) {
-        // TODO: load from cache or database
-        Optional<Application> application = merchantDao.findApplicationById(appId);
+        ApplicationPermit permit = permits.get(appId);
+        if (permit == null) {
+            synchronized (permits) {
+                if ((permit = permits.get(appId)) == null) {
+                    Optional<Application> application = merchantDao.findApplicationById(appId);
+                    permit = application.map(app -> {
+                        MerchantPermit merchant = merchantDao.findMerchantById(app.getMchId())
+                            .map(mer -> MerchantPermit.of(mer.getMchId(), mer.getProfitAccount(), mer.getVouchAccount(),
+                                mer.getPledgeAccount(), mer.getPrivateKey(), mer.getPublicKey()))
+                            .orElseThrow(() -> new ServiceAccessException(ErrorCode.OBJECT_NOT_FOUND, "商户信息未注册"));
+                        return ApplicationPermit.of(app.getAppId(), app.getAccessToken(), app.getPrivateKey(),
+                            app.getPublicKey(), merchant);
+                    }).orElseThrow(() -> new ServiceAccessException(ErrorCode.OBJECT_NOT_FOUND, "应用信息未注册"));
+                    permits.put(appId, permit);
+                }
+            }
+        }
+        return permit;
+
+        /*Optional<Application> application = merchantDao.findApplicationById(appId);
         return application.map(app -> {
-            MerchantPermit merchantPermit = merchantDao.findMerchantById(app.getMchId()).map(mer -> MerchantPermit.of(
+            MerchantPermit merchant = merchantDao.findMerchantById(app.getMchId()).map(mer -> MerchantPermit.of(
                 mer.getMchId(), mer.getProfitAccount(), mer.getVouchAccount(), mer.getPledgeAccount(), mer.getPrivateKey(),
                 mer.getPublicKey())).orElseThrow(() -> new ServiceAccessException(ErrorCode.OBJECT_NOT_FOUND, "商户信息未注册"));
-            return ApplicationPermit.of(app.getAppId(), app.getAccessToken(), app.getPrivateKey(), app.getPublicKey(), merchantPermit);
-        }).orElseThrow(() -> new ServiceAccessException(ErrorCode.OBJECT_NOT_FOUND, "应用信息未注册"));
+            return ApplicationPermit.of(app.getAppId(), app.getAccessToken(), app.getPrivateKey(), app.getPublicKey(), merchant);
+        }).orElseThrow(() -> new ServiceAccessException(ErrorCode.OBJECT_NOT_FOUND, "应用信息未注册"));*/
     }
 
     /**

@@ -1,5 +1,8 @@
 package com.diligrp.xtrade.upay.core.domain;
 
+/**
+ * 资金活动（金额/资金动作-收或支/资金项类型）模型
+ */
 public class FundActivity {
     // 金额 - 分（正数或负数）
     private long amount;

@@ -1,5 +1,8 @@
 package com.diligrp.xtrade.upay.core.exception;
 
+/**
+ * 资金账号异常类
+ */
 public class FundAccountException extends PaymentServiceException {
     public FundAccountException(String message) {
         super(message);

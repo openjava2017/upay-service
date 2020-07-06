@@ -1,5 +1,8 @@
 package com.diligrp.xtrade.upay.core.domain;
 
+/**
+ * 账号注册请求模型
+ */
 public class RegisterAccount {
     // 客户ID
     private Long customerId;

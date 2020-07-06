@@ -18,6 +18,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.Optional;
 
+/**
+ * 账户/余额渠道服务实现
+ */
 @Service("accountChannelService")
 public class AccountChannelServiceImpl implements IAccountChannelService {
 
@@ -27,6 +30,11 @@ public class AccountChannelServiceImpl implements IAccountChannelService {
     @Resource
     private IFundStreamEngine fundStreamEngine;
 
+    /**
+     * {@inheritDoc}
+     *
+     * 如果没有任何资金变动（资金收支或资金冻结）将抛出异常
+     */
     @Override
     public TransactionStatus submit(IFundTransaction transaction) {
         Optional<FundTransaction> transactionOpt = transaction.fundTransaction();
@@ -35,6 +43,9 @@ public class AccountChannelServiceImpl implements IAccountChannelService {
         return fundStreamEngine.submit(fundTransaction);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public FundAccount checkTradePermission(long accountId, String password, int maxPwdErrors) {
         AssertUtils.notEmpty(password, "password missed");
@@ -51,6 +62,9 @@ public class AccountChannelServiceImpl implements IAccountChannelService {
         return account;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public FundAccount checkTradePermission(long accountId) {
         Optional<FundAccount> accountOpt = fundAccountDao.findFundAccountById(accountId);

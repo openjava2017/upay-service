@@ -6,7 +6,6 @@ import java.util.Optional;
 
 /**
  * 确认交易模型-适用于预授权交易
- *
  */
 public class Confirm extends HashMap<String, Object> {
     // 交易账户ID

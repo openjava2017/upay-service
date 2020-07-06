@@ -10,6 +10,9 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.ComponentScan;
 
+/**
+ * 支付服务启动入口类
+ */
 @SpringBootConfiguration
 @EnableAutoConfiguration
 @ComponentScan(basePackageClasses = {BossConfiguration.class, TradeConfiguration.class,

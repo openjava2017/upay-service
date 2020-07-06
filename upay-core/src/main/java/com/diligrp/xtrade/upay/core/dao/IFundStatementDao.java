@@ -6,6 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * 资金收支明细数据访问层
+ */
 @Repository("fundStatementDao")
 public interface IFundStatementDao extends MybatisMapperSupport {
     void insertFundStatements(List<FundStatement> statements);

@@ -4,6 +4,9 @@ import com.diligrp.xtrade.shared.domain.BaseDo;
 
 import java.time.LocalDateTime;
 
+/**
+ * 交易费用数据模型
+ */
 public class TradeFee extends BaseDo {
     // 交易ID
     private String tradeId;

@@ -2,6 +2,9 @@ package com.diligrp.xtrade.upay.core.domain;
 
 import java.time.LocalDateTime;
 
+/**
+ * 账户状态数据传输对象
+ */
 public class AccountStateDto {
     // 资金账号ID
     private Long accountId;

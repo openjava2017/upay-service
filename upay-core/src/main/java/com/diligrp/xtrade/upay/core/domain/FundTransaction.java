@@ -2,6 +2,9 @@ package com.diligrp.xtrade.upay.core.domain;
 
 import java.time.LocalDateTime;
 
+/**
+ * 资金事务模型
+ */
 public class FundTransaction {
     // 支付ID
     private String paymentId;

@@ -1,5 +1,8 @@
 package com.diligrp.xtrade.upay.boss.util;
 
+/**
+ * 常量列表
+ */
 public final class Constants {
     public final static String PARAM_SERVICE = "service";
 

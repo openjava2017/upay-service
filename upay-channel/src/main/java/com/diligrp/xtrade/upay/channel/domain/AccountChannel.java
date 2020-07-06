@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 账户/余额渠道领域模型
+ */
 public class AccountChannel {
     // 支付ID
     private String paymentId;

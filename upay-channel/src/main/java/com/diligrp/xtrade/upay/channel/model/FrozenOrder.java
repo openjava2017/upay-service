@@ -4,6 +4,9 @@ import com.diligrp.xtrade.shared.domain.BaseDo;
 
 import java.time.LocalDateTime;
 
+/**
+ * 资金冻结订单数据模型
+ */
 public class FrozenOrder extends BaseDo {
     // 冻结ID
     private Long frozenId;

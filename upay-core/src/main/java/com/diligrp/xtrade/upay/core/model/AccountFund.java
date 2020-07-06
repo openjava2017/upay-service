@@ -4,6 +4,9 @@ import com.diligrp.xtrade.shared.domain.BaseDo;
 
 import java.time.LocalDateTime;
 
+/**
+ * 账户资金数据模型
+ */
 public class AccountFund extends BaseDo {
     // 账号ID
     private Long accountId;

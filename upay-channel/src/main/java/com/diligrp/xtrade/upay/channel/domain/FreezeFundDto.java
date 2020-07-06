@@ -1,5 +1,8 @@
 package com.diligrp.xtrade.upay.channel.domain;
 
+/**
+ * 资金冻结数据传输模型
+ */
 public class FreezeFundDto {
     // 资金账号ID
     private Long accountId;

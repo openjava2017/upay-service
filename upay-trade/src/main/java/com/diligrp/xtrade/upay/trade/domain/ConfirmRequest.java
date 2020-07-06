@@ -3,6 +3,9 @@ package com.diligrp.xtrade.upay.trade.domain;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 预授权交易确认消费请求模型
+ */
 public class ConfirmRequest {
     // 交易ID
     private String tradeId;

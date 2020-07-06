@@ -4,6 +4,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 交易支付模型
+ */
 public class Payment extends HashMap<String, Object> {
     // 资金账号ID
     private Long accountId;

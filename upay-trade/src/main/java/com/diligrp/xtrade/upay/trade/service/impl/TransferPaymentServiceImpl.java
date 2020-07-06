@@ -32,6 +32,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 账户转账业务：转入方与转出方进行资金转账，暂不支持收取费用
+ */
 @Service("transferPaymentService")
 public class TransferPaymentServiceImpl implements IPaymentService {
 
@@ -47,6 +50,11 @@ public class TransferPaymentServiceImpl implements IPaymentService {
     @Resource
     private KeyGeneratorManager keyGeneratorManager;
 
+    /**
+     * {@inheritDoc}
+     *
+     * 转账只支持账户/余额渠道，且不支持费用收取
+     */
     @Override
     public PaymentResult commit(TradeOrder trade, Payment payment) {
         if (!ChannelType.forTrade(payment.getChannelId())) {

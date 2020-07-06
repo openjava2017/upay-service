@@ -49,6 +49,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * 预授权交易：先对买方账户进行资金冻结，然后解冻并完成交易或取消交易并解冻资金。实际交易金额可以大于冻结金额。
+ * 业务场景：交易过磅时冻结资金（prepare->commit)，回皮后解冻并实际交易（confirm)或取消交易(cancel)
+ */
 @Service("authTradePaymentService")
 public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl implements IPaymentService {
 
@@ -73,6 +77,11 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
     @Resource
     private KeyGeneratorManager keyGeneratorManager;
 
+    /**
+     * {@inheritDoc}
+     *
+     * 提交预授权交易只冻结资金，不进行实际交易；
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public PaymentResult commit(TradeOrder trade, Payment payment) {
@@ -120,7 +129,9 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
     }
 
     /**
-     * "预授权缴费"业务确认预授权消费(交易冻结后确认实际缴费金额)，当前业务场景允许实际缴费金额大于冻结金额
+     * {@inheritDoc}
+     *
+     * "预授权交易"业务确认预授权交易(交易冻结后确认实际交易金额)，当前业务场景允许实际交易金额大于冻结金额
      */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
@@ -212,7 +223,9 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
     }
 
     /**
-     * 撤销交易-退交易资金和佣金，交易撤销需要修改交易订单状态
+     * {@inheritDoc}
+     *
+     * 撤销交易-确认预授权后撤销退交易资金和佣金，确认预授权前只解冻资金
      */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)

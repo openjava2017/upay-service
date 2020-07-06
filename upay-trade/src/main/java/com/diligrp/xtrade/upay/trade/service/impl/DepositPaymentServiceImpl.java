@@ -38,6 +38,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * 充值业务：允许现金、POS和网银进行账户充值
+ */
 @Service("depositPaymentService")
 public class DepositPaymentServiceImpl implements IPaymentService {
 
@@ -56,6 +59,11 @@ public class DepositPaymentServiceImpl implements IPaymentService {
     @Resource
     private KeyGeneratorManager keyGeneratorManager;
 
+    /**
+     * {@inheritDoc}
+     *
+     * 提交充值时充值账号需与创建充值申请时资金账号一致
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public PaymentResult commit(TradeOrder trade, Payment payment) {

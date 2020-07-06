@@ -7,6 +7,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/**
+ * 交易订单数据访问层
+ */
 @Repository("tradeOrderDao")
 public interface ITradeOrderDao extends MybatisMapperSupport {
     void insertTradeOrder(TradeOrder tradeOrder);

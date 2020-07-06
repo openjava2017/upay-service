@@ -38,6 +38,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * 账户提现业务：支持现金和网银提现
+ */
 @Service("withdrawPaymentService")
 public class WithdrawPaymentServiceImpl implements IPaymentService {
 
@@ -56,6 +59,11 @@ public class WithdrawPaymentServiceImpl implements IPaymentService {
     @Resource
     private KeyGeneratorManager keyGeneratorManager;
 
+    /**
+     * {@inheritDoc}
+     *
+     * 只支持现金和网银渠道，且提现费用入商户收益账户
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public PaymentResult commit(TradeOrder trade, Payment payment) {

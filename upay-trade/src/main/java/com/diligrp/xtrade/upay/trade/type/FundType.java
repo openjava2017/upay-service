@@ -8,8 +8,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
- * @author: brenthuang
- * @date: 2020/03/24
+ * 资金项类型列表
  */
 public enum FundType implements IEnumType {
 

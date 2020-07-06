@@ -23,6 +23,9 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+/**
+ * 核心资金流引擎实现
+ */
 @Service("fundStreamEngine")
 public class DefaultFundStreamEngine implements IFundStreamEngine {
 

@@ -2,6 +2,9 @@ package com.diligrp.xtrade.upay.trade.domain;
 
 import java.time.LocalDateTime;
 
+/**
+ * 支付状态数据传输对象
+ */
 public class PaymentStateDto {
     // 支付ID
     private String paymentId;

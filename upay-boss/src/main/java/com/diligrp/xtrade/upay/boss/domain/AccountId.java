@@ -1,5 +1,8 @@
 package com.diligrp.xtrade.upay.boss.domain;
 
+/**
+ * 账号注册接口层模型
+ */
 public class AccountId {
     private Long accountId;
 

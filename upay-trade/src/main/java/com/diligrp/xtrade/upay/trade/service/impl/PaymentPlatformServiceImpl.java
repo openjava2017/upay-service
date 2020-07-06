@@ -39,6 +39,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * 支付平台服务：聚合所有支持的业务类型，根据不同的交易类型将请求分发只不同的业务服务组件
+ */
 @Service("paymentPlatformService")
 public class PaymentPlatformServiceImpl implements IPaymentPlatformService, BeanPostProcessor {
 
@@ -53,6 +56,9 @@ public class PaymentPlatformServiceImpl implements IPaymentPlatformService, Bean
 
     private Map<TradeType, IPaymentService> services = new HashMap<>();
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public String createTrade(ApplicationPermit application, TradeRequest trade) {
@@ -73,6 +79,11 @@ public class PaymentPlatformServiceImpl implements IPaymentPlatformService, Bean
         return tradeId;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * 预授权业务只冻结资金不进行实际交易
+     */
     @Override
     public PaymentResult commit(ApplicationPermit application, PaymentRequest request) {
         Optional<ChannelType> channelType = ChannelType.getType(request.getChannelId());
@@ -104,6 +115,11 @@ public class PaymentPlatformServiceImpl implements IPaymentPlatformService, Bean
         return service.commit(trade, payment);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * 预授权业务确认交易，解冻资金并实际发生资金交易
+     */
     @Override
     public PaymentResult confirm(ApplicationPermit application, ConfirmRequest request) {
         Optional<TradeOrder> tradeOpt = tradeOrderDao.findTradeOrderById(request.getTradeId());
@@ -122,6 +138,11 @@ public class PaymentPlatformServiceImpl implements IPaymentPlatformService, Bean
         return service.confirm(trade, confirm);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * 正常业务撤销将对资金进行逆向操作；对于预授权业务，确认交易前撤销只解冻资金，确认交易后撤销进行资金逆向操作
+     */
     @Override
     public PaymentResult cancel(ApplicationPermit application, RefundRequest request) {
         Optional<TradeOrder> tradeOpt = tradeOrderDao.findTradeOrderById(request.getTradeId());

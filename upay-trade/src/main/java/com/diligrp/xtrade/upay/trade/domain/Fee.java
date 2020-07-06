@@ -3,6 +3,9 @@ package com.diligrp.xtrade.upay.trade.domain;
 import com.diligrp.xtrade.shared.util.AssertUtils;
 import com.diligrp.xtrade.upay.core.util.Constants;
 
+/**
+ * 交易费用模型
+ */
 public class Fee {
     // 金额-元
     private Long amount;

@@ -1,5 +1,8 @@
 package com.diligrp.xtrade.upay.trade.domain;
 
+/**
+ * 交易申请模型
+ */
 public class TradeRequest {
     // 交易类型
     private Integer type;

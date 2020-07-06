@@ -4,6 +4,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 支付申请模型
+ */
 public class PaymentRequest {
     // 交易ID
     private String tradeId;

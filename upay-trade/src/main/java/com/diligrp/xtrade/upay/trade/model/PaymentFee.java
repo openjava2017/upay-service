@@ -5,6 +5,9 @@ import com.diligrp.xtrade.upay.core.util.Constants;
 
 import java.time.LocalDateTime;
 
+/**
+ * 支付费用数据模型
+ */
 public class PaymentFee extends BaseDo {
     // 支付ID
     private String paymentId;

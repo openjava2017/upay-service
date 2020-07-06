@@ -7,6 +7,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/**
+ * 资金冻结订单数据访问
+ */
 @Repository("frozenOrderDao")
 public interface IFrozenOrderDao extends MybatisMapperSupport {
     void insertFrozenOrder(FrozenOrder frozenOrder);

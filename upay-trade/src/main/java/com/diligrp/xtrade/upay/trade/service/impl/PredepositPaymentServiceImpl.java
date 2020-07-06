@@ -33,6 +33,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 预存款业务：与充值业务类似，支持现金、POS和网银进行预存款充值，且暂不支持费用收取
+ */
 @Service("preDepositPaymentService")
 public class PredepositPaymentServiceImpl implements IPaymentService {
 
@@ -48,6 +51,11 @@ public class PredepositPaymentServiceImpl implements IPaymentService {
     @Resource
     private KeyGeneratorManager keyGeneratorManager;
 
+    /**
+     * {@inheritDoc}
+     *
+     * 预存款充值时提交充值时资金账号与创建预存款交易的资金账号需一致，且暂不支持收取费用
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public PaymentResult commit(TradeOrder trade, Payment payment) {

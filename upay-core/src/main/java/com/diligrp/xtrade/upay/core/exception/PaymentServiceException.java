@@ -2,6 +2,9 @@ package com.diligrp.xtrade.upay.core.exception;
 
 import com.diligrp.xtrade.upay.core.ErrorCode;
 
+/**
+ * 支付服务异常类
+ */
 public class PaymentServiceException extends RuntimeException {
     /**
      * 错误码

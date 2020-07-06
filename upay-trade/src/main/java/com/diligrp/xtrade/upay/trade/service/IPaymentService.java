@@ -9,6 +9,9 @@ import com.diligrp.xtrade.upay.trade.exception.TradePaymentException;
 import com.diligrp.xtrade.upay.trade.model.TradeOrder;
 import com.diligrp.xtrade.upay.trade.type.TradeType;
 
+/**
+ * 支付服务接口
+ */
 public interface IPaymentService {
     /**
      * 提交支付

@@ -7,6 +7,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/**
+ * 资金账户数据访问层
+ */
 @Repository("fundAccountDao")
 public interface IFundAccountDao extends MybatisMapperSupport {
     void insertFundAccount(FundAccount account);

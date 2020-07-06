@@ -42,6 +42,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * 缴费业务：允许使用账户/余额、现金进行缴费业务
+ */
 @Service("feePaymentService")
 public class FeePaymentServiceImpl implements IPaymentService {
 
@@ -66,6 +69,11 @@ public class FeePaymentServiceImpl implements IPaymentService {
     @Resource
     private KeyGeneratorManager keyGeneratorManager;
 
+    /**
+     * {@inheritDoc}
+     *
+     * 提交缴费时的费用入商户收益账户
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public PaymentResult commit(TradeOrder trade, Payment payment) {
@@ -129,7 +137,9 @@ public class FeePaymentServiceImpl implements IPaymentService {
     }
 
     /**
-     * 撤销交易-退所有金额，交易撤销需要修改交易订单状态
+     * {@inheritDoc}
+     *
+     * 撤销交易-资金做逆向操作，商户退缴费金额
      */
     @Override
     public PaymentResult cancel(TradeOrder trade, Refund cancel) {

@@ -5,6 +5,9 @@ import com.diligrp.xtrade.upay.core.model.AccountFund;
 
 import java.util.Optional;
 
+/**
+ * 资金账户服务接口
+ */
 public interface IFundAccountService {
     /**
      * 创建资金账号

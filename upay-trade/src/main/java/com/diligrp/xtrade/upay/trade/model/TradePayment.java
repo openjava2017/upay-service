@@ -4,6 +4,9 @@ import com.diligrp.xtrade.shared.domain.BaseDo;
 
 import java.time.LocalDateTime;
 
+/**
+ * 交易支付数据模型
+ */
 public class TradePayment extends BaseDo {
     // 支付ID
     private String paymentId;
