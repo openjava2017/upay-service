@@ -65,7 +65,7 @@ public class PredepositPaymentServiceImpl implements IPaymentService {
         accountChannelService.checkTradePermission(payment.getAccountId());
         ISerialKeyGenerator keyGenerator = keyGeneratorManager.getSerialKeyGenerator(SequenceKey.PAYMENT_ID);
         String paymentId = keyGenerator.nextSerialNo(new PaymentDatedIdStrategy(trade.getType()));
-        AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId());
+        AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId(), trade.getBusinessId());
         IFundTransaction transaction = channel.openTransaction(trade.getType(), now);
         transaction.income(trade.getAmount(), FundType.FUND.getCode(), FundType.FUND.getName());
         TransactionStatus status = accountChannelService.submit(transaction);
@@ -76,8 +76,8 @@ public class PredepositPaymentServiceImpl implements IPaymentService {
             throw new TradePaymentException(ErrorCode.DATA_CONCURRENT_UPDATED, "系统正忙，请稍后重试");
         }
         TradePayment paymentDo = TradePayment.builder().paymentId(paymentId).tradeId(trade.getTradeId())
-            .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
-            .amount(payment.getAmount()).fee(0L).state(PaymentState.SUCCESS.getCode())
+            .channelId(payment.getChannelId()).accountId(trade.getAccountId()).businessId(trade.getBusinessId())
+            .name(trade.getName()).cardNo(null).amount(payment.getAmount()).fee(0L).state(PaymentState.SUCCESS.getCode())
             .description(tradeName(payment.getChannelId())).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
 

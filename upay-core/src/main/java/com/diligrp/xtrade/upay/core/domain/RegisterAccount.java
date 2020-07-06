@@ -3,8 +3,6 @@ package com.diligrp.xtrade.upay.core.domain;
 public class RegisterAccount {
     // 客户ID
     private Long customerId;
-    // 主资金账号ID
-    private Long parentId;
     // 账号类型
     private Integer type;
     // 业务用途
@@ -32,14 +30,6 @@ public class RegisterAccount {
 
     public void setCustomerId(Long customerId) {
         this.customerId = customerId;
-    }
-
-    public Long getParentId() {
-        return parentId;
-    }
-
-    public void setParentId(Long parentId) {
-        this.parentId = parentId;
     }
 
     public Integer getType() {
@@ -129,11 +119,6 @@ public class RegisterAccount {
     public class Builder {
         public Builder customerId(Long customerId) {
             RegisterAccount.this.customerId = customerId;
-            return this;
-        }
-
-        public Builder parentId(Long parentId) {
-            RegisterAccount.this.parentId = parentId;
             return this;
         }
 

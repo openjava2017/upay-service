@@ -9,6 +9,8 @@ public class PaymentRequest {
     private String tradeId;
     // 资金账号ID
     private Long accountId;
+    // 业务账号ID
+    private Long businessId;
     // 支付渠道
     private Integer channelId;
     // 支付密码
@@ -32,6 +34,14 @@ public class PaymentRequest {
 
     public void setAccountId(Long accountId) {
         this.accountId = accountId;
+    }
+
+    public Long getBusinessId() {
+        return businessId;
+    }
+
+    public void setBusinessId(Long businessId) {
+        this.businessId = businessId;
     }
 
     public Integer getChannelId() {

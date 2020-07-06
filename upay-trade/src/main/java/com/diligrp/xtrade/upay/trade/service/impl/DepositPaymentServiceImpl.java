@@ -74,7 +74,7 @@ public class DepositPaymentServiceImpl implements IPaymentService {
         accountChannelService.checkTradePermission(payment.getAccountId());
         ISerialKeyGenerator keyGenerator = keyGeneratorManager.getSerialKeyGenerator(SequenceKey.PAYMENT_ID);
         String paymentId = keyGenerator.nextSerialNo(new PaymentDatedIdStrategy(trade.getType()));
-        AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId());
+        AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId(), trade.getBusinessId());
         IFundTransaction transaction = channel.openTransaction(trade.getType(), now);
         transaction.income(trade.getAmount(), FundType.FUND.getCode(), FundType.FUND.getName());
         fees.forEach(fee -> {
@@ -85,7 +85,7 @@ public class DepositPaymentServiceImpl implements IPaymentService {
         // 处理商户收益
         if (!fees.isEmpty()) {
             MerchantPermit merchant = payment.getObject(MerchantPermit.class.getName(), MerchantPermit.class);
-            AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount());
+            AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount(), null);
             IFundTransaction feeTransaction = merChannel.openTransaction(trade.getType(), now);
             fees.forEach(fee ->
                 feeTransaction.income(fee.getAmount(), fee.getType(), fee.getTypeName())
@@ -100,8 +100,8 @@ public class DepositPaymentServiceImpl implements IPaymentService {
         }
         long totalFee = fees.stream().mapToLong(Fee::getAmount).sum();
         TradePayment paymentDo = TradePayment.builder().paymentId(paymentId).tradeId(trade.getTradeId())
-            .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
-            .amount(payment.getAmount()).fee(totalFee).state(PaymentState.SUCCESS.getCode())
+            .channelId(payment.getChannelId()).accountId(trade.getAccountId()).businessId(trade.getBusinessId())
+            .name(trade.getName()).cardNo(null).amount(payment.getAmount()).fee(totalFee).state(PaymentState.SUCCESS.getCode())
             .description(tradeName(payment.getChannelId())).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
         if (!fees.isEmpty()) {

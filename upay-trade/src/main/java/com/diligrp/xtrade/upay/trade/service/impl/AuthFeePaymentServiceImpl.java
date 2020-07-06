@@ -92,7 +92,7 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
         FundAccount account = accountChannelService.checkTradePermission(payment.getAccountId(), payment.getPassword(), 5);
         ISerialKeyGenerator keyGenerator = keyGeneratorManager.getSerialKeyGenerator(SequenceKey.PAYMENT_ID);
         String paymentId = keyGenerator.nextSerialNo(new PaymentDatedIdStrategy(trade.getType()));
-        AccountChannel channel = AccountChannel.of(paymentId, payment.getAccountId());
+        AccountChannel channel = AccountChannel.of(paymentId, payment.getAccountId(), payment.getBusinessId());
         IFundTransaction transaction = channel.openTransaction(FrozenState.FROZEN.getCode(), now);
         transaction.freeze(trade.getAmount());
         TransactionStatus status = accountChannelService.submit(transaction);
@@ -113,8 +113,8 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
         }
         // 生成"待处理"支付的支付记录
         TradePayment paymentDo = TradePayment.builder().paymentId(paymentId).tradeId(trade.getTradeId())
-            .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
-            .amount(payment.getAmount()).fee(0L).state(PaymentState.PENDING.getCode())
+            .channelId(payment.getChannelId()).accountId(trade.getAccountId()).businessId(trade.getBusinessId())
+            .name(trade.getName()).cardNo(null).amount(payment.getAmount()).fee(0L).state(PaymentState.PENDING.getCode())
             .description(TradeType.AUTH_FEE.getName()).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
 
@@ -155,7 +155,7 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
             mer.getMchId(), mer.getProfitAccount(), mer.getVouchAccount(), mer.getPledgeAccount(), mer.getPrivateKey(),
             mer.getPublicKey())).orElseThrow(() -> new ServiceAccessException(ErrorCode.OBJECT_NOT_FOUND, "商户信息未注册"));
         // 客户账号资金解冻并缴费
-        AccountChannel channel = AccountChannel.of(payment.getPaymentId(), payment.getAccountId());
+        AccountChannel channel = AccountChannel.of(payment.getPaymentId(), payment.getAccountId(), payment.getBusinessId());
         IFundTransaction transaction = channel.openTransaction(trade.getType(), now);
         transaction.unfreeze(frozenOrder.getAmount());
         fees.forEach(fee ->
@@ -164,7 +164,7 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
         TransactionStatus status = accountChannelService.submit(transaction);
 
         // 园区收益账户收款
-        AccountChannel merChannel = AccountChannel.of(payment.getPaymentId(), merchant.getProfitAccount());
+        AccountChannel merChannel = AccountChannel.of(payment.getPaymentId(), merchant.getProfitAccount(), null);
         IFundTransaction feeTransaction = merChannel.openTransaction(trade.getType(), now);
         fees.forEach(fee ->
             feeTransaction.income(fee.getAmount(), fee.getType(), fee.getTypeName())
@@ -227,7 +227,7 @@ public class AuthFeePaymentServiceImpl extends FeePaymentServiceImpl implements 
         }
 
         // 解冻冻结资金
-        AccountChannel channel = AccountChannel.of(payment.getPaymentId(), payment.getAccountId());
+        AccountChannel channel = AccountChannel.of(payment.getPaymentId(), payment.getAccountId(), payment.getBusinessId());
         IFundTransaction transaction = channel.openTransaction(trade.getType(), when);
         transaction.unfreeze(trade.getAmount());
         TransactionStatus status = accountChannelService.submit(transaction);

@@ -90,7 +90,7 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
         FundAccount fromAccount = accountChannelService.checkTradePermission(payment.getAccountId(), payment.getPassword(), 5);
         ISerialKeyGenerator keyGenerator = keyGeneratorManager.getSerialKeyGenerator(SequenceKey.PAYMENT_ID);
         String paymentId = keyGenerator.nextSerialNo(new PaymentDatedIdStrategy(trade.getType()));
-        AccountChannel channel = AccountChannel.of(paymentId, payment.getAccountId());
+        AccountChannel channel = AccountChannel.of(paymentId, payment.getAccountId(), payment.getBusinessId());
         IFundTransaction transaction = channel.openTransaction(FrozenState.FROZEN.getCode(), now);
         transaction.freeze(trade.getAmount());
         TransactionStatus status = accountChannelService.submit(transaction);
@@ -111,8 +111,8 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
         }
         // 生成"待处理"支付的支付记录
         TradePayment paymentDo = TradePayment.builder().paymentId(paymentId).tradeId(trade.getTradeId())
-            .channelId(payment.getChannelId()).accountId(payment.getAccountId()).name(fromAccount.getName()).cardNo(null)
-            .amount(payment.getAmount()).fee(0L).state(PaymentState.PENDING.getCode())
+            .channelId(payment.getChannelId()).accountId(payment.getAccountId()).businessId(payment.getBusinessId())
+            .name(fromAccount.getName()).cardNo(null).amount(payment.getAmount()).fee(0L).state(PaymentState.PENDING.getCode())
             .description(TradeType.AUTH_TRADE.getName()).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
 
@@ -151,7 +151,7 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
             mer.getPublicKey())).orElseThrow(() -> new ServiceAccessException(ErrorCode.OBJECT_NOT_FOUND, "商户信息未注册"));
 
         // 处理买家付款和买家佣金
-        AccountChannel fromChannel = AccountChannel.of(payment.getPaymentId(), payment.getAccountId());
+        AccountChannel fromChannel = AccountChannel.of(payment.getPaymentId(), payment.getAccountId(), payment.getBusinessId());
         IFundTransaction fromTransaction = fromChannel.openTransaction(trade.getType(), now);
         fromTransaction.unfreeze(frozenOrder.getAmount());
         fromTransaction.outgo(confirm.getAmount(), FundType.FUND.getCode(), FundType.FUND.getName());
@@ -161,7 +161,7 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
         TransactionStatus status = accountChannelService.submit(fromTransaction);
 
         // 处理卖家收款和卖家佣金
-        AccountChannel toChannel = AccountChannel.of(payment.getPaymentId(), trade.getAccountId());
+        AccountChannel toChannel = AccountChannel.of(payment.getPaymentId(), trade.getAccountId(), trade.getBusinessId());
         IFundTransaction toTransaction = toChannel.openTransaction(trade.getType(), now);
         toTransaction.income(confirm.getAmount(), FundType.FUND.getCode(), FundType.FUND.getName());
         fees.stream().filter(Fee::forSeller).forEach(fee -> {
@@ -171,7 +171,7 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
 
         // 处理商户收益
         if (!fees.isEmpty()) {
-            AccountChannel merChannel = AccountChannel.of(payment.getPaymentId(), merchant.getProfitAccount());
+            AccountChannel merChannel = AccountChannel.of(payment.getPaymentId(), merchant.getProfitAccount(), null);
             IFundTransaction merTransaction = merChannel.openTransaction(trade.getType(), now);
             fees.forEach(fee ->
                 merTransaction.income(fee.getAmount(), fee.getType(), fee.getTypeName())
@@ -221,7 +221,7 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
             return super.cancel(trade, cancel);
         }
         if (!trade.getAccountId().equals(cancel.getAccountId())) {
-            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "退款账号不一致");
+            throw new TradePaymentException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "撤销账号不一致");
         }
 
         // "预授权交易"不存在组合支付的情况，因此一个交易订单只对应一条支付记录
@@ -238,7 +238,7 @@ public class AuthTradePaymentServiceImpl extends TradePaymentServiceImpl impleme
         }
 
         // 解冻冻结资金
-        AccountChannel channel = AccountChannel.of(payment.getPaymentId(), payment.getAccountId());
+        AccountChannel channel = AccountChannel.of(payment.getPaymentId(), payment.getAccountId(), payment.getBusinessId());
         IFundTransaction transaction = channel.openTransaction(trade.getType(), when);
         transaction.unfreeze(trade.getAmount());
         TransactionStatus status = accountChannelService.submit(transaction);

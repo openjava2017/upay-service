@@ -53,31 +53,23 @@ public class FundAccountServiceImpl implements IFundAccountService {
             Gender.getGender(account.getGender()).orElseThrow(
                 () -> new FundAccountException(ErrorCode.ILLEGAL_ARGUMENT_ERROR, "无效的性别"));
         }
-        if (account.getParentId() != null && account.getParentId() != 0) {
-            Optional<FundAccount> masterAccount = fundAccountDao.findFundAccountById(account.getParentId());
-            masterAccount.orElseThrow(() -> new FundAccountException(ErrorCode.ACCOUNT_NOT_FOUND, "主资金账号不存在"));
-            masterAccount.ifPresent(AccountStateMachine::createChildAccountCheck);
-        }
 
         LocalDateTime when = LocalDateTime.now();
         IKeyGenerator keyGenerator = keyGeneratorManager.getKeyGenerator(SequenceKey.FUND_ACCOUNT);
         long accountId = keyGenerator.nextId();
-        long parentId = account.getParentId() == null ? 0 : account.getParentId();
         String secretKey = PasswordUtils.generateSecretKey();
         String password = PasswordUtils.encrypt(account.getPassword(), secretKey);
 
         FundAccount fundAccount = FundAccount.builder().customerId(account.getCustomerId()).accountId(accountId)
-            .parentId(parentId).type(account.getType()).useFor(account.getUseFor()).code(account.getCode())
+            .parentId(0L).type(account.getType()).useFor(account.getUseFor()).code(account.getCode())
             .name(account.getName()).gender(account.getGender()).mobile(account.getMobile()).email(account.getEmail())
             .idCode(account.getIdCode()).address(account.getAddress()).password(password).secretKey(secretKey)
             .state(AccountState.NORMAL.getCode()).mchId(mchId).version(0).createdTime(when).build();
         fundAccountDao.insertFundAccount(fundAccount);
-        if (fundAccount.getParentId() == 0) {
-            AccountFund accountFund = AccountFund.builder().accountId(accountId).balance(0L).frozenAmount(0L).vouchAmount(0L)
-                .dailyAmount(0L).version(0).createdTime(when).build();
-            accountFundDao.insertAccountFund(accountFund);
-        }
 
+        AccountFund accountFund = AccountFund.builder().accountId(accountId).balance(0L).frozenAmount(0L).vouchAmount(0L)
+            .dailyAmount(0L).version(0).createdTime(when).build();
+        accountFundDao.insertAccountFund(accountFund);
         return accountId;
     }
 

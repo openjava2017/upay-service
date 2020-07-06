@@ -91,7 +91,7 @@ public class FeePaymentServiceImpl implements IPaymentService {
         ISerialKeyGenerator keyGenerator = keyGeneratorManager.getSerialKeyGenerator(SequenceKey.PAYMENT_ID);
         String paymentId = keyGenerator.nextSerialNo(new PaymentDatedIdStrategy(trade.getType()));
         if (payment.getChannelId() == ChannelType.ACCOUNT.getCode()) {
-            AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId());
+            AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId(), trade.getBusinessId());
             IFundTransaction transaction = channel.openTransaction(trade.getType(), now);
             fees.forEach(fee ->
                 transaction.outgo(fee.getAmount(), fee.getType(), fee.getTypeName())
@@ -100,7 +100,7 @@ public class FeePaymentServiceImpl implements IPaymentService {
         }
 
         // 处理商户收款
-        AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount());
+        AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount(), null);
         IFundTransaction feeTransaction = merChannel.openTransaction(trade.getType(), now);
         fees.forEach(fee ->
             feeTransaction.income(fee.getAmount(), fee.getType(), fee.getTypeName())
@@ -115,8 +115,8 @@ public class FeePaymentServiceImpl implements IPaymentService {
         }
 
         TradePayment paymentDo = TradePayment.builder().paymentId(paymentId).tradeId(trade.getTradeId())
-            .channelId(payment.getChannelId()).accountId(trade.getAccountId()).name(trade.getName()).cardNo(null)
-            .amount(trade.getAmount()).fee(0L).state(PaymentState.SUCCESS.getCode())
+            .channelId(payment.getChannelId()).accountId(trade.getAccountId()).businessId(trade.getBusinessId())
+            .name(trade.getName()).cardNo(null).amount(trade.getAmount()).fee(0L).state(PaymentState.SUCCESS.getCode())
             .description(TradeType.FEE.getName()).version(0).createdTime(now).build();
         tradePaymentDao.insertTradePayment(paymentDo);
 
@@ -157,7 +157,7 @@ public class FeePaymentServiceImpl implements IPaymentService {
             mer.getPublicKey())).orElseThrow(() -> new ServiceAccessException(ErrorCode.OBJECT_NOT_FOUND, "商户信息未注册"));
         ISerialKeyGenerator keyGenerator = keyGeneratorManager.getSerialKeyGenerator(SequenceKey.PAYMENT_ID);
         String paymentId = keyGenerator.nextSerialNo(new PaymentDatedIdStrategy(trade.getType()));
-        AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount());
+        AccountChannel merChannel = AccountChannel.of(paymentId, merchant.getProfitAccount(), null);
         IFundTransaction feeTransaction = merChannel.openTransaction(TradeType.CANCEL.getCode(), now);
         fees.forEach(fee ->
             feeTransaction.outgo(fee.getAmount(), fee.getType(), fee.getTypeName())
@@ -167,7 +167,7 @@ public class FeePaymentServiceImpl implements IPaymentService {
         // 处理客户收款
         TransactionStatus status = null;
         if (payment.getChannelId() == ChannelType.ACCOUNT.getCode()) {
-            AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId());
+            AccountChannel channel = AccountChannel.of(paymentId, trade.getAccountId(), trade.getBusinessId());
             IFundTransaction transaction = channel.openTransaction(TradeType.CANCEL.getCode(), now);
             fees.forEach(fee ->
                 transaction.income(fee.getAmount(), fee.getType(), fee.getTypeName())

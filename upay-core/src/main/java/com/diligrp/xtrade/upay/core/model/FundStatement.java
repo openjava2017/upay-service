@@ -12,8 +12,8 @@ public class FundStatement extends BaseDo {
     private String paymentId;
     // 账号ID
     private Long accountId;
-    // 子账号ID
-    private Long childId;
+    // 业务账号ID
+    private Long businessId;
     // 交易类型
     private Integer tradeType;
     // 动作-收入 支出
@@ -45,12 +45,12 @@ public class FundStatement extends BaseDo {
         this.accountId = accountId;
     }
 
-    public Long getChildId() {
-        return childId;
+    public Long getBusinessId() {
+        return businessId;
     }
 
-    public void setChildId(Long childId) {
-        this.childId = childId;
+    public void setBusinessId(Long businessId) {
+        this.businessId = businessId;
     }
 
     public Integer getTradeType() {
@@ -124,8 +124,8 @@ public class FundStatement extends BaseDo {
             return this;
         }
 
-        public Builder childId(Long childId) {
-            FundStatement.this.childId = childId;
+        public Builder businessId(Long businessId) {
+            FundStatement.this.businessId = businessId;
             return this;
         }
 

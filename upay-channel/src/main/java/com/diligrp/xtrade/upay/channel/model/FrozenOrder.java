@@ -11,6 +11,8 @@ public class FrozenOrder extends BaseDo {
     private String paymentId;
     // 账号ID
     private Long accountId;
+    // 业务账号
+    private Long businessId;
     // 用户名
     private String name;
     // 冻结类型-系统冻结 交易冻结
@@ -46,6 +48,14 @@ public class FrozenOrder extends BaseDo {
 
     public void setAccountId(Long accountId) {
         this.accountId = accountId;
+    }
+
+    public Long getBusinessId() {
+        return businessId;
+    }
+
+    public void setBusinessId(Long businessId) {
+        this.businessId = businessId;
     }
 
     public String getName() {
@@ -113,6 +123,11 @@ public class FrozenOrder extends BaseDo {
 
         public Builder accountId(Long accountId) {
             FrozenOrder.this.accountId = accountId;
+            return this;
+        }
+
+        public Builder businessId(Long businessId) {
+            FrozenOrder.this.businessId = businessId;
             return this;
         }
 

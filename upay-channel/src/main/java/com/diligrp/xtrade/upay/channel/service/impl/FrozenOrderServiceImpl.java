@@ -3,7 +3,10 @@ package com.diligrp.xtrade.upay.channel.service.impl;
 import com.diligrp.xtrade.shared.sequence.IKeyGenerator;
 import com.diligrp.xtrade.shared.sequence.KeyGeneratorManager;
 import com.diligrp.xtrade.upay.channel.dao.IFrozenOrderDao;
-import com.diligrp.xtrade.upay.channel.domain.*;
+import com.diligrp.xtrade.upay.channel.domain.AccountChannel;
+import com.diligrp.xtrade.upay.channel.domain.FreezeFundDto;
+import com.diligrp.xtrade.upay.channel.domain.FrozenStateDto;
+import com.diligrp.xtrade.upay.channel.domain.IFundTransaction;
 import com.diligrp.xtrade.upay.channel.exception.PaymentChannelException;
 import com.diligrp.xtrade.upay.channel.model.FrozenOrder;
 import com.diligrp.xtrade.upay.channel.service.IAccountChannelService;
@@ -50,7 +53,7 @@ public class FrozenOrderServiceImpl implements IFrozenOrderService {
 
         // 冻结资金
         LocalDateTime now = LocalDateTime.now();
-        AccountChannel channel = AccountChannel.of(null, request.getAccountId());
+        AccountChannel channel = AccountChannel.of(null, request.getAccountId(), request.getBusinessId());
         IFundTransaction transaction = channel.openTransaction(FrozenState.FROZEN.getCode(), now);
         transaction.freeze(request.getAmount());
         accountChannelService.submit(transaction);
@@ -58,10 +61,9 @@ public class FrozenOrderServiceImpl implements IFrozenOrderService {
         // 创建冻结资金订单
         IKeyGenerator keyGenerator = keyGeneratorManager.getKeyGenerator(SequenceKey.FROZEN_ID);
         long frozenId = keyGenerator.nextId();
-        FrozenOrder frozenOrder = FrozenOrder.builder().frozenId(frozenId).paymentId(null)
-            .accountId(request.getAccountId()).name(account.getName()).type(request.getType())
-            .amount(request.getAmount()).state(FrozenState.FROZEN.getCode())
-            .description(request.getDescription()).version(0).createdTime(now).build();
+        FrozenOrder frozenOrder = FrozenOrder.builder().frozenId(frozenId).paymentId(null).accountId(request.getAccountId())
+            .businessId(request.getBusinessId()).name(account.getName()).type(request.getType()).amount(request.getAmount())
+            .state(FrozenState.FROZEN.getCode()).description(request.getDescription()).version(0).createdTime(now).build();
         frozenOrderDao.insertFrozenOrder(frozenOrder);
         return frozenId;
     }
@@ -82,7 +84,7 @@ public class FrozenOrderServiceImpl implements IFrozenOrderService {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        AccountChannel channel = AccountChannel.of(null, order.getAccountId());
+        AccountChannel channel = AccountChannel.of(null, order.getAccountId(), order.getBusinessId());
         IFundTransaction transaction = channel.openTransaction(FrozenState.UNFROZEN.getCode(), now);
         transaction.unfreeze(order.getAmount());
         accountChannelService.submit(transaction);

@@ -64,7 +64,7 @@ CREATE TABLE `upay_application` (
 -- 说明：账号类型分为个人、企业和商户，个人账户和企业账户针对于市场客户；
 -- 个人、企业账户业务用途有交易账户，缴费账户，预存款账户；
 -- 商户账户为市场特殊账户，业务用途包括：收益资金账户、担保资金账户和押金资金账户等；
--- 资金账号分主资金账号和子资金账号，通过parent_id标识，子资金账号无账户资金记录；
+-- 资金账号分主资金账号和子资金账号，通过parent_id标识，子资金账号暂时无任何业务用途；
 -- parent_id=0为主账号，且登录账号记录资金账号所属的园区卡号。
 -- --------------------------------------------------------------------
 DROP TABLE IF EXISTS `upay_fund_account`;
@@ -134,7 +134,7 @@ CREATE TABLE `upay_fund_statement` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `payment_id` VARCHAR(40) NOT NULL COMMENT '支付ID',
   `account_id` BIGINT NOT NULL COMMENT '账号ID',
-  `child_id` BIGINT COMMENT '子账号ID',
+  `business_id` BIGINT COMMENT '业务账号',
   `trade_type` TINYINT UNSIGNED NOT NULL COMMENT '交易类型',
   `action` TINYINT UNSIGNED NOT NULL COMMENT '动作-收入 支出',
   `balance` BIGINT NOT NULL COMMENT '(前)余额-分',
@@ -169,6 +169,7 @@ CREATE TABLE `upay_trade_order` (
   `serial_no` VARCHAR(40) COMMENT '外部流水号',
   `cycle_no` VARCHAR(40) COMMENT '账务周期号',
   `account_id` BIGINT NOT NULL COMMENT '账号ID',
+  `business_id` BIGINT COMMENT '业务账号',
   `name` VARCHAR(20) COMMENT '账号名称',
   `amount` BIGINT NOT NULL COMMENT '金额-分',
   `max_amount` BIGINT NOT NULL COMMENT '初始金额-分',
@@ -199,6 +200,7 @@ CREATE TABLE `upay_trade_payment` (
   `trade_id` VARCHAR(40) NOT NULL COMMENT '交易ID',
   `channel_id` TINYINT UNSIGNED NOT NULL COMMENT '支付渠道',
   `account_id` BIGINT NOT NULL COMMENT '账号ID',
+  `business_id` BIGINT COMMENT '业务账号',
   `name` VARCHAR(20) COMMENT '账号名称',
   `card_no` VARCHAR(20) COMMENT '银行卡号',
   `amount` BIGINT NOT NULL COMMENT '金额-分',
@@ -269,6 +271,7 @@ CREATE TABLE `upay_frozen_order` (
   `frozen_id` BIGINT NOT NULL COMMENT '冻结ID',
   `payment_id` VARCHAR(40) COMMENT '支付ID',
   `account_id` BIGINT NOT NULL COMMENT '账号ID',
+  `business_id` BIGINT COMMENT '业务账号',
   `name` VARCHAR(20) COMMENT '用户名',
   `type` TINYINT UNSIGNED NOT NULL COMMENT '冻结类型-系统冻结 交易冻结',
   `amount` BIGINT NOT NULL COMMENT '金额-分',

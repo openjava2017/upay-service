@@ -33,6 +33,7 @@ public class FundServiceComponent {
     public FrozenId freeze(ServiceRequest<FreezeFundDto> request) {
         FreezeFundDto freezeFund = request.getData();
         AssertUtils.notNull(freezeFund.getAccountId(), "accountId missed");
+        AssertUtils.notNull(freezeFund.getBusinessId(), "businessId missed");
         AssertUtils.notNull(freezeFund.getAmount(), "amount missed");
         freezeFund.setType(FrozenType.SYSTEM_FROZEN.getCode());
         Long id = frozenOrderService.freeze(freezeFund);
@@ -55,7 +56,6 @@ public class FundServiceComponent {
         AccountId accountId = request.getData();
         AssertUtils.notNull(accountId.getAccountId(), "accountId missed");
 
-        //TODO:考虑主子资金账号
         return fundAccountService.findAccountFundById(accountId.getAccountId())
             .map(fund -> FundBalance.of(fund.getAccountId(), fund.getBalance(), fund.getFrozenAmount()))
             .orElseThrow(() -> new FundAccountException(ErrorCode.ACCOUNT_NOT_FOUND, "资金账号不存在"));

@@ -102,11 +102,10 @@ public class DefaultFundStreamEngine implements IFundStreamEngine {
             List<FundStatement> statements = Arrays.stream(transaction.getActivities())
                 .filter(activity -> activity.getAmount() != 0).sorted(FundActivity::compare)
                 .map(activity -> FundStatement.builder().paymentId(transaction.getPaymentId())
-                    .accountId(transaction.getAccountId()).childId(0L).tradeType(transaction.getType())
-                    .action(ActionType.getByAmount(activity.getAmount()).getCode())
-                    .balance(balance.getAndAdd(activity.getAmount())).amount(activity.getAmount())
-                    .type(activity.getType()).typeName(activity.getTypeName()).description(null)
-                    .createdTime(transaction.getWhen()).build())
+                    .accountId(transaction.getAccountId()).businessId(transaction.getBusinessId())
+                    .tradeType(transaction.getType()).action(ActionType.getByAmount(activity.getAmount()).getCode())
+                    .balance(balance.getAndAdd(activity.getAmount())).amount(activity.getAmount()).type(activity.getType())
+                    .typeName(activity.getTypeName()).description(null).createdTime(transaction.getWhen()).build())
                 .collect(Collectors.toList());
             // 返回资金收支明细
             status.ofStreams(statements.stream().map(stmt -> TransactionStatus.FundStream.of(stmt.getBalance(), stmt.getAmount(),
